@@ -25,14 +25,14 @@ def annotate_QC_genes(adata,organism = 'human' ,**parameters):
     return
     """
     if organism == 'human' or None:
-        print ('organism is human, annotating human genes')
+        print ('Organism is human, annotating human genes')
         adata.var['mt'] = adata.var_names.str.startswith("MT-")  # mitochondrial genes as 'mt'
         adata.var['ribo'] = adata.var_names.str.startswith(("RPS","RPL")) # ribosomal genes genes as 'ribo'
         adata.var['hb'] = adata.var_names.str.contains(("^HB[^(P)(S)]")) & ~adata.var_names.str.contains(("HBEGF")) 
         # "^HB[^(P)" changed to "^HB[^(P)(S)" and  & ~adata_test.var_names.str.contains(("HBEGF")) added to remove HBS1L and HBEGF which are NOT memoglobin genes
         adata.var['malat1'] = adata.var_names.str.contains(("MALAT1"))  # MALAT1 genes as 'malat1'
     if organism == 'mouse':
-        print ('organism is mouse, annotating mouse genes')
+        print ('Organism is mouse, annotating mouse genes')
         adata.var['mt'] = adata.var_names.str.startswith("mt-")  # mitochondrial genes as 'mt'
         adata.var['ribo'] = adata.var_names.str.startswith(("Rps","Rpl")) # ribosomal genes genes as 'ribo'
         adata.var['hb'] = adata.var_names.str.contains(("^Hb[^(P)(S)]")) & ~adata.var_names.str.contains(("Hbegf"))

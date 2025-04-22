@@ -1,6 +1,18 @@
+# module level imports
+import anndata
+import pandas as pd
+import scanpy as sc
+import numpy as np
+
 # Convenience method for computing the size of objects
-def print_size_in_MB(x):
-    print('{:.3} MB'.format(x.__sizeof__()/1e6))
+def print_size_in_MB(obj):
+    '''Print the size of an object in MB'''
+    import sys
+    size_MB = sys.getsizeof(obj) / 1e6
+    message = f"size: {size_MB:.3f} MB"
+    #print('{:.3} MB'.format(x.__sizeof__()/1e6))
+    print(message)
+    return size_MB
 
 def df_loadings_ordered_byPC(adata,ascending=False,
 save_table=False,output_dir="./adata_output/",output_prefix="adata_",#**parameters
@@ -659,9 +671,9 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     full_table = pd.read_csv(dataset_tables_output_directory+output_prefix+"rank_genes_groups_"+test+".csv",header=0,index_col=0)
     total_cluster_number=int(len(full_table.columns)/5) # set total cluster number to column # / 5 of wilcox or t test rank table
     background_list_len=full_table.shape[0]
-    print(f'wilcox: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
+    print(f't_test: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
     foreground_list_len=len((full_table[ :int(background_list_len * top_percentile)]))
-    print(f'wilcox: the foreground list is {foreground_list_len} genes long')
+    print(f't_test: the foreground list is {foreground_list_len} genes long')
 
     for i in range(0, total_cluster_number):
         test_cluster_number=i
@@ -693,9 +705,7 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     
 from typing import Union, Sequence, Optional, Callable
 from anndata import AnnData
-def filter_obs(data: Union[AnnData,# MuData
-   ], var: Union[str, Sequence[str]], func: Optional[Callable] = None
-) -> None:
+def filter_obs(data: Union[AnnData,], var: Union[str, Sequence[str]], func: Optional[Callable] = None) -> None:
     """
     Filter observations (samples or cells) in-place
     using any column in .obs or in .X.
@@ -805,7 +815,9 @@ def filter_obs(data: Union[AnnData,# MuData
 
     return
 
+import numpy as np
 def label_cells_by_single_gene_expression(adata, gene_name1, min_n_counts1, use_raw=True, use_percentile=False,):
+    import numpy as np
     if use_percentile:
         percentile1=min_n_counts1
         if use_raw:

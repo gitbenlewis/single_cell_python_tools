@@ -1,5 +1,6 @@
 ## module imports
 import scanpy as sc
+import pandas as pd
 
 
 
@@ -53,8 +54,47 @@ def rename_leiden_clusters(adata,rename_cluster=False,new_cluster_names=None,new
     ##################### cluster remnameing #####END
     return
 
-
+def rename_leiden_clusters(
+    adata,
+    rename_cluster=False,
+    new_cluster_names=None,
+    new_obs_key='Cell_Clusters_Named',
+    reorder_cluster_names=False,
+    new_cluster_names_order=None,
+    **parameters
+):
+    '''
+    Rename Leiden clusters using a provided list of new cluster names.
     
+    Parameters:
+    - adata: AnnData object
+    - rename_cluster: Boolean flag to perform renaming
+    - new_cluster_names: List of cluster name strings in the order matching leiden cluster IDs
+    - new_obs_key: Name of the new column to store cluster names
+    - reorder_cluster_names: Whether to set the categories as an ordered Categorical
+    - new_cluster_names_order: Explicit order for reordering categories
+    '''
+    if rename_cluster:
+        leiden_number_list = adata.obs['leiden'].value_counts().index.tolist()
+        cluster_name_dict = dict(zip(leiden_number_list, new_cluster_names))
+
+        # Map and check for missing mappings
+        mapped = adata.obs['leiden'].map(cluster_name_dict)
+
+        if mapped.isna().any():
+            categories = new_cluster_names + ['Unknown']
+            mapped = mapped.fillna('Unknown')
+        else:
+            categories = new_cluster_names
+
+        adata.obs[new_obs_key] = pd.Categorical(mapped, categories=categories, ordered=reorder_cluster_names)
+        # reorder categories based on input list
+        adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(categories, ordered=True)
+        # reorder based on a specific order if provided
+        if reorder_cluster_names and new_cluster_names_order is not None:
+            adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(new_cluster_names_order, ordered=True)
+
+    return
 
 
 ######################################################################### 

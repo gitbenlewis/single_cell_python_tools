@@ -4,6 +4,14 @@ Mostly scanpy wrappers and tools that use adata objects to stream line single ce
 # Installation
       git clone  <this repo>
       cd <this repo>
+      conda env remove -n sctl
+      conda env create -f sctl.yaml
+      conda activate sctl
+
+      or 
+      
+      git clone  <this repo>
+      cd <this repo>
       pip install -e .
 
 # Package import

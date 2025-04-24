@@ -1,6 +1,16 @@
 # single_cell_python_tools
 Mostly scanpy wrappers and tools that use adata objects to stream line single cell analysis 
 
+# Installation
+      git clone  <this repo>
+      cd <this repo>
+      pip install -e .
+
+# Package import
+      import single_cell_python_tools as sctl
+      from single_cell_python_tools.DATASET_class import *
+      print(sctl.DATASET_class.__doc__)
+   
 # Example_notebooks/
  (most usefull starting point)
 check out the example notebook folders

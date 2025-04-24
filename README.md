@@ -1,6 +1,43 @@
 # single_cell_python_tools
 Mostly scanpy wrappers and tools that use adata objects to stream line single cell analysis 
 
+# Example_notebooks/
+ (most usefull starting point)
+check out the example notebook folders
+## /01_PBMC3k: QC,preprocess,clustering, visuallzation, DEG , GSEA
+###  00_sctl_functions_preprocessing_PBMC3K.ipynb 
+   #### functions operate a separate adata object
+          - sctl.function(adata,**adata.uns["parameters"] 
+          Ex:
+          #  data download handled elsewhere
+          adata = sc.read_10x_mtx(data_directory_path)
+          adata.uns["parameters"]=pbmc3k_parameters
+          sctl.pp.basic_filitering(adata,**adata.uns["parameters"])
+          sctl.pp.annotate_n_view_adata_raw_counts(adata,**adata.uns["parameters"])
+          sctl.pp.filter_cells_by_anotated_QC_gene(adata,**adata.uns["parameters"])
+          sctl.pp.remove_genes(adata,**adata.uns["parameters"])
+          sctl.pp.process2scaledPCA(adata,**adata.uns["parameters"])
+          sctl.pp.leiden_clustering(adata,**adata.uns["parameters"])
+          sctl.pp.silhouette_score_n_plot(adata,**adata.uns["parameters"])
+          import scanpy as sc
+          sc.pl.umap(adata, color=adata.uns["parameters"]['umap_marker_gene_list'])
+
+### 01_sctl_DATASET_class_preprocessing_PBMC3K.ipynb
+#### class object for each dataset, methods for analysis 
+         - sctl_DATASET_class().basic_filitering().clustering().etc()
+         Ex:
+         pbmc3k_sctl_DATASET=sctl_DATASET_class(parameters=pbmc3k_parameters)
+         sctl_DATASET_class.download_data().unpack_tar().load_data()
+         pbmc3k_sctl_DATASET.basic_filitering()
+         pbmc3k_sctl_DATASET.annotate_n_view_adata_raw_counts()
+         pbmc3k_sctl_DATASET.filter_cells_by_anotated_QC_gene()
+         pbmc3k_sctl_DATASET.remove_genes()
+         pbmc3k_sctl_DATASET.process2scaledPCA()
+         pbmc3k_sctl_DATASET.leiden_clustering()
+         pbmc3k_sctl_DATASET.silhouette_score_n_plot()
+         pbmc3k_sctl_DATASET.marker_gene_umaps()
+
+
 # Getting started
 
 ## Clone this repo
@@ -9,7 +46,7 @@ clone this repo into into to the directory where you keep your cloned python pac
 
 ```
 cd home/ubuntu/projects/github_repos
-git clone https://github.com/megadesk/single_cell_python_tools.git
+https://github.com/gitbenlewis/single_cell_python_tools.git
 ```
 
 ## Code to add to the start of a jupyter notebook in order to run the package
@@ -49,7 +86,6 @@ For example adding, adding '../../' to your sys.path from any of the notebooks i
 >>>> 02_B_notebook
 
 
-
 # single_cell_python_tools package functions
 
 ## Getting start will the package functions
@@ -75,21 +111,7 @@ For example adding, adding '../../' to your sys.path from any of the notebooks i
 ### latest update is a modified version of scanpy's ingest funciton
 `print(sctl.tl.ingest_verbose.__doc__)`
 
-
-
-# most usefull  (most usefull starting point)
-## check out the eample notebook folders
-* preprocessing_PBMC3k_example_nbs
-   * sctl_gex_class_preprocessing_PBMC3k.ipynb # single class object for preprocessing
-   * adsctl_functions_preprocessing_PBMC3k_.ipynb # multiple functions preprocess an adata object 
-      * more memory efficient
-
-
-
-# I'll add more to read me later
-
-
-## Subpackage - single_cell_python_tools - preprocessing - ANsc.pp.
+## Subpackage - single_cell_python_tools - preprocessing - sctl.pp.
 
 `sctl.pp.basic_filitering()`
 ```
@@ -229,93 +251,10 @@ sc.pl.umap(adata, color=[key_added] )
 
 
 ## Subpackage - single_cell_python_tools - tools - sctl
+* analysis helper functions (not QC or preprocessing)
+ 
 
-### latest update is a modified version of scanpy's injest funciton
-
-`sctl.tl.ingest_verbose(adata, adata_ref, obs=['adata_ref_obs1', 'adata_ref_obs2'])`
-```
-hello i modified this ingest
-
-* more than just a single obs column (e.g. adata_ref_obs1) is added to the adata_query.obs for each key specified in obs argument
-* standard ingests normally adds a cell labels column to the adata_query.obs for each key specified in obs argument
-* in this case there was only a single obs key passed so standard ingest would have just added adata.obs['louvain']
-* these are the addtional columns that ingest_verbose adds
-* 'KNN_distances', #### this is all of the distances from the query cell to the KNN network in the adata_ref reference cells
-* 'KNN_avg_distance', #### this is the average distance from the query cell to the KNN network in the adata_ref reference cells
-* 'KNN_std_distance',  #### this is the standard deviation of the distances from the query cell to the KNN network in the adata_ref reference cells
-* 'adata_ref_obs1_all_KNN', ### this the cell labels for all of the KNN group
-* adata_ref_obs1_KNN_pct_most_common' #### frequency of the most common category label in each cells  KNN group is 
-* 'adata_ref_obs1_KNN_pct', ##### the pct of each category label in each cell's KNN group is 
-* the category corresponding to each pct is stored adata_query.uns['louvain_KNN_pct_cat_labels']
-   these are in the same order as the adata.obs['adata_ref_obs1_KNN_pct']  values
-
-* to run this modified ingest 
-repo_parent_dir='../../'
-
-import sys
-if repo_parent_dir not in sys.path:
-   sys.path.append(repo_parent_dir)
-
-import single_cell_python_tools as adsctl
-from single_cell_python_tools.sctl_gex_class import *
-# then this is the function call to ingest_verbose all arguements are the same as standard ingest 
-# ingest verbose just has additional obs columns outputs
-
-sctl.tl.ingest_verbose(adata, adata_ref, obs=['adata_ref_obs1', 'adata_ref_obs2'])
-################# code that was modified
-def to_adata(self, inplace=False):
-   """\
-   Returns `adata_new` with mapped embeddings and labels.
-
-   If `inplace=False` returns a copy of `adata_new`
-   with mapped embeddings and labels in `obsm` and `obs` correspondingly.
-   If `inplace=True` returns nothing and updates `adata_new.obsm`
-   and `adata_new.obs` with mapped embeddings and labels.
-   """
-   adata = self._adata_new if inplace else self._adata_new.copy()
-
-   adata.obsm.update(self._obsm)
-
-
-   for key in self._obs:
-      adata.obs[key] = self._obs[key]
-
-   ########################### added code starts here
-   ##### add a list of distances values for each ingested obs label
-   adata.obs['KNN_distances']=self._distances.tolist()
-   ##### add an average distance value for each ingested obs label
-   adata.obs['KNN_avg_distance']=np.mean(self._distances, axis=1).tolist()
-   ##### add the standard deviation of the distances for each ingested obs label
-   adata.obs['KNN_std_distance']=np.std(self._distances, axis=1).tolist()
-   
-   
-   for key in self._obs:
-      ##### add a list of label values for each ingested obs label
-      cat_array = self._adata_ref.obs[key].astype('category' )  # ensure it's categorical
-      values = [cat_array[inds].tolist() for inds in self._indices]
-      adata.obs[key+'_all_KNN'] = values
-
-      #### addd percentage of each label in the KNN
-      values_KNN_percent = [cat_array[inds].value_counts(sort=False,normalize=True).tolist() for inds in self._indices]
-      adata.obs[key+'_KNN_pct'] = values_KNN_percent
-
-      #### add ordered list of cat labels for each ingested obs label to adata.uns to identify adata.obs[key+'_KNN_percent'] values
-      adata.uns[key+'_KNN_pct_cat_labels'] = cat_array.cat.categories.tolist()
-
-      #### add the pct of the most common label in the KNN
-      values_KNN_pct_most_common = [cat_array[inds].value_counts(normalize=True).tolist()[0] for inds in self._indices]
-      adata.obs[key+'_KNN_pct_most_common'] = values_KNN_pct_most_common
-
-   ########################### added code ends here
-   if not inplace:
-      return adata
-```
-
-
-
-
-## Subpackage - single_cell_python_tools - plots - sctl.pl.
-
+## Subpackage - single_cell_python_tools - plots - sctl
 `sctl.pl.silhouette_score_n_plot(adata,leiden_res='unk',**parameters)`
 ```
 sctl.pl.silhouette_score_n_plot(adata,parameters,leiden_res='unk'):

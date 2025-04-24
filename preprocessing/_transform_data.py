@@ -1,7 +1,10 @@
 ## module imports
 import scanpy as sc
 
-
+# set up logging within the module (not the root logger)
+import logging
+__name__leaf = __name__.split('.')[-1]
+logger = logging.getLogger("sctl.pp." + __name__leaf)
 
 def process2scaledPCA(adata,
                    normalize_total_target_sum=1e4,logarithmize=True,
@@ -12,95 +15,152 @@ def process2scaledPCA(adata,
                    regress_cell_cycle_score=False,HVG_flavor='seurat',HVG_n_top_genes=1500,organism='human',
                       **parameters):
     '''
+    def process2scaledPCA(adata,
+                   normalize_total_target_sum=1e4,logarithmize=True,
+                   filter_HVG=False,HVG_min_mean=0.0125, HVG_max_mean=3, HVG_min_disp=3,
+                   regress_mt=False,regress_ribo=False,regress_malat1=False,regress_hb=False,
+                   scale=True,scale_max_std_value=None,PCA=True,
+                      cell_cycle_score=True,
+                   regress_cell_cycle_score=False,HVG_flavor='seurat',HVG_n_top_genes=1500,organism='human',
+                      **parameters):
     
     #### code
-    
-
-                      
-    '''
-    
-    ################################## library-size correct  the data:    
-    ################################## Logarithmize    
+    logger.info(f" running process2scaledPCA adata at start \n {adata}")
+    ################################## library-size correct the data:
+    logger.info(f"Step 1) library-size correct and Logarithmize (optional) the data ")
+    logger.info(f"{normalize_total_target_sum} : normalize_total_target_sum ")
+    logger.info(f"{logarithmize} : Logarithmize (optional) the data ")
     adata=norm_log(adata,normalize_total_target_sum,logarithmize, **parameters)
     #################################  HVG selection
+    logger.info(f"Select and annotate highly-variable genes (HVGs) ")
+    logger.info(f"HVG selection flavor : HVG_flavor= {HVG_flavor} ")
     if HVG_flavor=='seurat':
-        print(f'############### HVG_flavor=seurat')
         if logarithmize==True:
             adata=HVG_selection_log_norm_seurat(adata,filter_HVG,HVG_min_mean, HVG_max_mean, HVG_min_disp, **parameters)
         else:
-            print(f'####################################################  warning data not logerized use alterante HVG selection')
+            logger.warning(f' warning data not logerized use alterante HVG selection')
     if HVG_flavor=='seurat_v3':
-        print(f'############### HVG_flavor=seurat_v3')
         if logarithmize==True:
-            print(f'####################################################  warning data  logerized ....seurat_v3 will use layers["counts"]  ')
-        print(f'#################################################### seurat_v3 HVG selection HVG_n_top_genes = {HVG_n_top_genes}   ')
+            logger.warning(f' warning data is logerized ....seurat_v3 will use layers["counts"]  ')
+        logger.info(f'{HVG_n_top_genes} : HVG_n_top_genes, seurat_v3 HVG selection ')
         adata=HVG_selection_log_norm_seurat_v3(adata,filter_HVG,HVG_n_top_genes, **parameters)
 
     #################################  regress_out_anotated_QC_genes
+    logger.info(f"Step 2) regress_out_anotated_QC_genes (optional)")
     regress_out_anotated_QC_genes(adata, regress_mt,regress_ribo, regress_malat1,regress_hb, **parameters)
+    logger.info(f"Step 3) scale the data (optional) : {scale} ")
     if scale==True:
-        #print(f'####################################################  Now running sc.pp.scale() Scale the data (each gene to unit variance)')
-        #sc.pp.scale(adata, max_value=10)  # Scale and Clip values exceeding standard deviation 10.
         scale_func(adata,scale_max_std_value=scale_max_std_value, **parameters)
-    print(f'####################################################  calc_cell_cycle_score')
-    print(f'we are calc_cell_cycle_score True/Flase = {cell_cycle_score}')
+    logger.info(f"Step 4) cell cycle score (optional)  ")
+    logger.info(f" {cell_cycle_score} : calculate cell cycle score (optional) ")
+    logger.info(f" {regress_cell_cycle_score} : regressing out cell cycle score (optional) ")
     if cell_cycle_score ==True:
-        print(f'running calc_cell_cycle_score(adata)')
+        logger.info(f"running sc.pp.calc_cell_cycle_score(adata,organism={organism}) ")
         calc_cell_cycle_score(adata,organism=organism)
-    print(f'we are regressing out  cell_cycle_score True/Flase = {regress_cell_cycle_score}')
     if regress_cell_cycle_score ==True:
         regress_cell_cycle_score_func(adata)
+    logger.info(f"Step 5) PCA analysis   ")
     if PCA ==True:
         PCA_func(adata, **parameters)
     else:
-        print(f' PCA == False ... skipping PCA ')
+        logger.warning(f"PCA == False ... skipping PCA, PCA required for UMAP and tSNE")
+    logger.info(f"Done : process2scaledPCA adata AFTER \n {adata}")
+    return adata
+    '''
+    logger.info(f" running process2scaledPCA adata at start \n {adata}")
+    ################################## library-size correct the data:
+    logger.info(f"Step 1) library-size correct and Logarithmize (optional) the data ")
+    logger.info(f"{normalize_total_target_sum} : normalize_total_target_sum ")
+    logger.info(f"{logarithmize} : Logarithmize (optional) the data ")
+    adata=norm_log(adata,normalize_total_target_sum,logarithmize, **parameters)
+    #################################  HVG selection
+    logger.info(f"Select and annotate highly-variable genes (HVGs) ")
+    logger.info(f"HVG selection flavor : HVG_flavor= {HVG_flavor} ")
+    if HVG_flavor=='seurat':
+        if logarithmize==True:
+            #logger.info(f' logarithmize==True')
+            adata=HVG_selection_log_norm_seurat(adata,filter_HVG,HVG_min_mean, HVG_max_mean, HVG_min_disp, **parameters)
+        else:
+            logger.warning(f' warning data not logerized use alterante HVG selection')
+    if HVG_flavor=='seurat_v3':
+        if logarithmize==True:
+            logger.warning(f' warning data is logerized ....seurat_v3 will use layers["counts"]  ')
+        logger.info(f'{HVG_n_top_genes} : HVG_n_top_genes, HVG_flavor==seurat_v3 HVG selection ')
+        adata=HVG_selection_log_norm_seurat_v3(adata,filter_HVG,HVG_n_top_genes, **parameters)
+
+    #################################  regress_out_anotated_QC_genes
+    logger.info(f"Step 2) regress_out_anotated_QC_genes (optional)")
+    regress_out_anotated_QC_genes(adata, regress_mt,regress_ribo, regress_malat1,regress_hb, **parameters)
+    logger.info(f"Step 3) scale the data (optional) : {scale} ")
+    if scale==True:
+        scale_func(adata,scale_max_std_value=scale_max_std_value, **parameters)
+    logger.info(f"Step 4) cell cycle score (optional)  ")
+    logger.info(f" {cell_cycle_score} : calculate cell cycle score (optional) ")
+    logger.info(f" {regress_cell_cycle_score} : regressing out cell cycle score (optional) ")
+    if cell_cycle_score ==True:
+        logger.info(f"running sctl.pp.calc_cell_cycle_score(adata,organism={organism}) ")
+        calc_cell_cycle_score(adata,organism=organism)
+    if regress_cell_cycle_score ==True:
+        regress_cell_cycle_score_func(adata)
+    logger.info(f"Step 5) PCA analysis   ")
+    if PCA ==True:
+        PCA_func(adata, **parameters)
+    else:
+        logger.warning(f"PCA == False ... skipping PCA, PCA required for UMAP and tSNE")
+    logger.info(f"Done : process2scaledPCA adata AFTER \n {adata}")
     return adata
 
-def scale_func(adata,scale_max_std_value=10, **parameters):
-    print(f'####################################################  Now running sc.pp.scale() Scale the data (each gene to unit variance)')
-    print(f' scale_max_std_value= {scale_max_std_value}')
+def scale_func(adata,scale_max_std_value=None, **parameters):
+    logger.info(f' Scale the data (each gene to unit variance)')
+    logger.info(f"running sc.pp.scale(adata,scale_max_std_value={scale_max_std_value}) ")
     sc.pp.scale(adata, max_value=scale_max_std_value)  # Scale and Clip values exceeding standard deviation 10.
     return 
 def PCA_func(adata, **parameters):
-    print(f'####################################################  Principal component analysis')
+    logger.info(f' Principal component analysis, results stored in adata.obsm["X_pca"]')
+    logger.info(f"running sc.tl.pca(adata, svd_solver='arpack')")
+    logger.info(f"plotting variance ratio sc.pl.pca_variance_ratio(adata, log=True)")
     sc.tl.pca(adata, svd_solver='arpack')
     sc.pl.pca_variance_ratio(adata, log=True)
     return 
 
 
-def norm_log(adata,normalize_total_target_sum=1e4, logarithmize=True, **parameters):
+def norm_log(adata,normalize_total_target_sum=1e4, save_counts_layer=True, logarithmize=True, **parameters):
     '''
+    def norm_log(adata,normalize_total_target_sum=1e4, save_counts_layer=True, logarithmize=True, **parameters):
     #### code
-    def norm_log(adata,normalize_total_target_sum=1e4, logarithmize=True, **parameters):
-    
-    print(f'####################################################  save raw counts (adata.X) to adata.layers["counts"]')
-    adata.layers["counts"] = adata.X.copy()  # preserve counts
-    print(f'####################################################  library-size correct  the data  target_sum= {normalize_total_target_sum}')
-    ################################## library-size correct  the data:
-    sc.pp.normalize_total(adata, target_sum=normalize_total_target_sum)    
-    if logarithmize==True:
-        print(f'####################################################  Logarithmize  the data')
-        print(f'############################# to adata.raw save filtered, normalized and logarithmized gene expression and plot')
-        sc.pp.log1p(adata)
-    else:
-         print(f'############################# to adata.raw save filtered and normalized gene expression and plot')
-    adata.raw = adata
-    return
-    
-    '''
-    print(f'####################################################  save raw counts (adata.X) to adata.layers["counts"]')
-    adata.layers["counts"] = adata.X.copy()  # preserve counts
-    print(f'####################################################  library-size correct  the data  target_sum= {normalize_total_target_sum}')
+    logger.info(f'sctl.pp.norm_log() ')
+    logger.info(f'Step 1) preserve counts (optional) : {save_counts_layer} ')
+    if save_counts_layer==True:
+        logger.info(f'save raw counts (adata.X) to adata.layers["counts"]')
+        adata.layers["counts"] = adata.X.copy()  # preserve counts
+    logger.info(f'Step 2) library-size correct each observation target_sum= {normalize_total_target_sum} ')
     ################################## library-size correct  the data:
     sc.pp.normalize_total(adata, target_sum=normalize_total_target_sum)
+    logger.info(f'Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
     adata.raw = adata.copy()    #### save normalized counts to adata.raw not logerized
     if logarithmize==True:
-        print(f'####################################################  Logarithmize  the data')
-        print(f'############################# to adata.raw save filtered, normalized and logarithmized gene expression and plot')
+        logger.info(f'Step 4) logarithmize the data (optional): {logarithmize}')
         sc.pp.log1p(adata)
     else:
-         print(f'############################# to adata.raw save filtered and normalized gene expression and plot')
-    #adata.raw = adata
+         logger.info(f'data not logerized because logarithmize (switch)= {logarithmize}')
+    return adata
+    
+    '''
+    logger.info(f'sctl.pp.norm_log() ')
+    logger.info(f'Step 1) preserve counts (optional) : {save_counts_layer} ')
+    if save_counts_layer==True:
+        logger.info(f'save raw counts (adata.X) to adata.layers["counts"]')
+        adata.layers["counts"] = adata.X.copy()  # preserve counts
+    logger.info(f'Step 2) library-size correct each observation target_sum= {normalize_total_target_sum} ')
+    ################################## library-size correct  the data:
+    sc.pp.normalize_total(adata, target_sum=normalize_total_target_sum)
+    logger.info(f'Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
+    adata.raw = adata.copy()    #### save normalized counts to adata.raw not logerized
+    if logarithmize==True:
+        logger.info(f'Step 4) logarithmize the data (optional): {logarithmize}')
+        sc.pp.log1p(adata)
+    else:
+         logger.info(f'data not logerized because logarithmize (switch)= {logarithmize}')
     return adata
 
 
@@ -112,22 +172,22 @@ def HVG_selection_log_norm_seurat(adata,filter_HVG=False,HVG_min_mean=0.0125, HV
     #### code
     def HVG_selection_log_norm_seurat(adata,filter_HVG=False,HVG_min_mean=0.0125, HVG_max_mean=3, HVG_min_disp=3, **parameters):
     sc.pp.highly_variable_genes(adata, min_mean=HVG_min_mean, max_mean=HVG_max_mean, min_disp=HVG_min_disp)
-    print(f'############################# the number of highly varriable gens are = ',sum(adata.var.highly_variable))
+    logger.info(sum(adata.var.highly_variable),f' number of highly varriable genes ',)
     sc.pl.highly_variable_genes(adata) #### plot HVGs
     if filter_HVG==True:
         adata=HVG_removal(adata)
     else:
-        print(f' filter_HVG == False ... all genes will be kept ')
+        logger.info(f' filter_HVG == {filter_HVG} ... all genes will be kept ')
     return adata
-    
     '''
     sc.pp.highly_variable_genes(adata, min_mean=HVG_min_mean, max_mean=HVG_max_mean, min_disp=HVG_min_disp)
-    print(f'############################# the number of highly varriable gens are = ',sum(adata.var.highly_variable))
+    n_HVGs = sum(adata.var.highly_variable)
+    logger.info(f'{n_HVGs} : number of highly varriable genes ')
     sc.pl.highly_variable_genes(adata) #### plot HVGs
     if filter_HVG==True:
         adata=HVG_removal(adata)
     else:
-        print(f' filter_HVG == False ... all genes will be kept ')
+        logger.info(f' filter_HVG == {filter_HVG} ... all genes will be kept ')
     return adata
 
 def HVG_selection_log_norm_seurat_v3(adata,filter_HVG=False,HVG_n_top_genes=1500,**parameters):
@@ -145,32 +205,37 @@ def HVG_selection_log_norm_seurat_v3(adata,filter_HVG=False,HVG_n_top_genes=1500
     return adata
     '''
     sc.pp.highly_variable_genes(adata, n_top_genes=HVG_n_top_genes)
-    print(f'############################# the number of highly varriable gens are = ',sum(adata.var.highly_variable))
+    n_HVGs = sum(adata.var.highly_variable)
+    logger.info(f'{n_HVGs} : number of highly varriable genes ')
     sc.pl.highly_variable_genes(adata) #### plot HVGs
     if filter_HVG==True:
         adata=HVG_removal(adata)
     else:
-        print(f' filter_HVG == False ... all genes will be kept ')
+        logger.info(f' filter_HVG == {filter_HVG}  ... all genes will be kept ')
     return adata
 
 def HVG_removal(adata,filter_HVG=True,**parameters):
     '''
     #### code 
-    def HVG_removal(adata):
-    print(f' Before  filtering for highly_variable genes : number of Cells {adata.n_obs}, number of genes {adata.n_vars}')
-    print(f' filter_HVG = True ... only highly_variable gene will be kept ')
-    adata = adata[:, adata.var.highly_variable] # Keep only highly variable genes
-    print(f' AFTER  filtering for highly_variable genes: number of Cells {adata.n_obs}, number of genes {adata.n_vars}')
-    return adata
-    adata = adata[:, adata.var.highly_variable]
-    '''
+    def HVG_removal(adata,filter_HVG=True,**parameters):
     if filter_HVG == True:
-        print(f' Before  filtering for highly_variable genes : number of Cells {adata.n_obs}, number of genes {adata.n_vars}')
-        print(f' filter_HVG = True ... only highly_variable gene will be kept ')
+        logger.info(f' {adata.n_vars} features BEFORE filtering for highly_variable genes')
+        logger.info(f' filter_HVG = {filter_HVG} ... only highly_variable gene will be kept ')
         adata = adata[:, adata.var.highly_variable] # Keep only highly variable genes
-        print(f' AFTER  filtering for highly_variable genes: number of Cells {adata.n_obs}, number of genes {adata.n_vars}')
+        logger.info(f' {adata.n_vars} features AFTER filtering for highly_variable genes')
     else:
-        print(f' filter_HVG = False or not True ... all genes will be kept ')
+        logger.info(f' filter_HVG = {filter_HVG} or not True ... all genes will be kept ')
+    return adata
+    '''
+    n_HVGs = sum(adata.var.highly_variable)
+    logger.info(f'{n_HVGs} : number of highly varriable genes ')
+    if filter_HVG == True:
+        logger.info(f' {adata.n_vars} features BEFORE filtering for highly_variable genes')
+        logger.info(f' filter_HVG = {filter_HVG} ... only highly_variable gene will be kept ')
+        adata = adata[:, adata.var.highly_variable] # Keep only highly variable genes
+        logger.info(f' {adata.n_vars} features AFTER filtering for highly_variable genes')
+    else:
+        logger.info(f' filter_HVG = {filter_HVG} or not True ... all genes will be kept ')
     return adata
 
     
@@ -205,15 +270,15 @@ def regress_out_anotated_QC_genes(adata,regress_mt=False,regress_ribo=False,regr
     #return adata
     return
     '''
-    print(f'####################################################  regress_out_anotated_QC_genes ')
+    logger.info(f'####################################################  regress_out_anotated_QC_genes ')
     ################################# and Regression 
-    print(f'we are regressing out  total_counts {regress_mt}')
-    print(f'we are regressing out  pct_counts_mt {regress_mt}')
-    print(f'we are regressing out  pct_counts_ribo {regress_ribo}')
-    print(f'we are regressing out  pct_counts_malat1 {regress_malat1}')
-    print(f'we are regressing out  pct_counts_hb {regress_hb}')
+    logger.info(f'{regress_mt} (optional) regressing out  total_counts ')
+    logger.info(f'{regress_mt} (optional) regressing out  pct_counts_mt')
+    logger.info(f'{regress_ribo} (optional) regressing out  pct_counts_ribo')
+    logger.info(f'{regress_malat1} (optional) regressing out  pct_counts_malat1')
+    logger.info(f'{regress_hb} (optional) regressing out  pct_counts_hb ')
     ################ Do the regression 
-    print(f'n_jobs= {n_jobs=}')
+    logger.info(f'n_jobs= {n_jobs=}')
     if regress_mt ==True:
         # by total_counts
         sc.pp.regress_out(adata, ['total_counts' ],n_jobs=n_jobs)
@@ -256,9 +321,9 @@ def calc_cell_cycle_score(adata,organism='human'):
     return 
     '''
 
-    print(f'############# WARNING data should be scaled first if planing on regressing out cell cycle score')
+    logger.info(f'############# WARNING data should be scaled first if planing on regressing out cell cycle score')
     if organism=='human': 
-        print ('Organism is human, using  human cell cycle genes')
+        logger.info('Organism is human, using  human cell cycle genes')
         # Import cell cycle list and split into s_genes and g2m_genes
         #s_genes=['MCM5','PCNA','TYMS','FEN1','MCM2','MCM4','RRM1', 'UNG', 'GINS2', 'MCM6', 'CDCA7',
         #  'DTL', 'PRIM1', 'UHRF1', 'MLF1IP', 'HELLS', 'RFC2', 'RPA2', 'NASP', 'RAD51AP1', 'GMNN', 
@@ -286,7 +351,7 @@ def calc_cell_cycle_score(adata,organism='human'):
         ]
     elif organism == "mouse":
         # Same orthologs, mouse symbols
-        print ('Organism is mouse, using  mouse cell cycle genes')
+        logger.info('Organism is mouse, using  mouse cell cycle genes')
         s_genes  = [
             "Mcm5","Pcna","Tyms","Fen1","Mcm2","Mcm4","Rrm1","Ung","Gins2","Mcm6","Cdca7",
             "Dtl","Prim1","Uhrf1","Mlf1ip","Hells","Rfc2","Rpa2","Nasp","Rad51ap1","Gmnn",
@@ -304,9 +369,9 @@ def calc_cell_cycle_score(adata,organism='human'):
         ]
 
     cell_cycle_genes=g2m_genes+s_genes
-    print(f' there are {len(s_genes)} s_genes   {len(g2m_genes)} g2m_genes  {len(cell_cycle_genes)} cell_cycle_genes')
+    logger.info(f' there are {len(s_genes)} s_genes   {len(g2m_genes)} g2m_genes  {len(cell_cycle_genes)} cell_cycle_genes')
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
-    print(f' there are {len(cell_cycle_genes)} cell_cycle_genes in the dataset')    
+    logger.info(f' there are {len(cell_cycle_genes)} cell_cycle_genes in the dataset')    
      ## do scoring 
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
    # plot the cell cycle scores 

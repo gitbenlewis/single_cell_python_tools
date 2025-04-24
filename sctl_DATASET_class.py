@@ -35,13 +35,19 @@ import single_cell_python_tools as sctl
 # -----------------------------------------------------------------------------
 # Logging setup
 # -----------------------------------------------------------------------------
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-if not logger.hasHandlers():
-    logger.addHandler(console_handler)
+# set up logging within the module (not the root logger)
+import logging
+__name__leaf = __name__.split('.')[-1]
+logger = logging.getLogger("sctl." + __name__leaf)
+
+#logger = logging.getLogger(__name__)
+# log stream handler set up at package import
+# logger.setLevel(logging.INFO)
+#console_handler = logging.StreamHandler()
+#formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+#console_handler.setFormatter(formatter)
+#if not logger.hasHandlers():
+#    logger.addHandler(console_handler)
 
 
 class sctl_DATASET_class:
@@ -71,7 +77,10 @@ class sctl_DATASET_class:
         sc.logging.print_header()
         sc.settings.set_figure_params(dpi=80, facecolor="white")
         sc.settings.n_jobs = self.n_jobs
-        #  7) make log entries
+        # 7) set some default class attributes
+        self.leiden_clusters_renamed = False
+        self.leiden_clustering_done = False
+        # 8) make log entries
         logger.info("sctl_DATASET_class initialized with parameters:")
         logger.debug(f" self.parameters  {self.parameters}")
         logger.info(f" self.download_url {self.download_url}")
@@ -80,6 +89,8 @@ class sctl_DATASET_class:
         logger.info(f" self.input_file_path {self.input_file_path}")
         logger.info(f" self.output_prefix {self.output_prefix}")
         logger.info(f" self.output_dir {self.output_dir}")
+        
+        
 
 
 
@@ -517,12 +528,16 @@ class sctl_DATASET_class:
         # set up the parameters for the function
         kw = self._merge( kwargs)
         sctl.pp.leiden_clustering(self.adata,**kw)
+        # set self.leiden_clustering_done to True
+        self.leiden_clustering_done = True
         return self
     def rename_leiden_clusters(self, **kwargs):
         """  rename_leiden_clusters"""
         # set up the parameters for the function
         kw = self._merge( kwargs)
         sctl.pp.rename_leiden_clusters(self.adata,**kw)
+        # set self.leiden_clusters_renamed to True
+        self.leiden_clusters_renamed = True
         return self
     def leiden_cluster_sil_score(self, **kwargs):
         """  leiden_cluster_sil_score"""
@@ -562,10 +577,12 @@ class sctl_DATASET_class:
         rename_clusters = kw.get("rename_cluster",False)
         # plot the marker genes
         marker_genes = kw.get("marker_genes", self.adata.uns["parameters"]['umap_marker_gene_list'])
-        if rename_clusters:
+        if self.leiden_clusters_renamed:
             additonal_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  
+        elif self.leiden_clustering_done:
+            additonal_plots=kw.get("additonal_plots", ['leiden'])
         else:
-            additonal_plots=kw.get("additonal_plots", ['leiden']) 
+            additonal_plots=kw.get("additonal_plots", [])
 
         sc.pl.umap(self.adata, color=marker_genes + additonal_plots,ncols=ncols,
                    wspace=wspace,title=title,vmax=vmax,vmin=vmin, palette=palette,cmap=cmap)

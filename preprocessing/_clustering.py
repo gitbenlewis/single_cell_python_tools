@@ -2,7 +2,10 @@
 import scanpy as sc
 import pandas as pd
 
-
+# set up logging within the module (not the root logger)
+import logging
+__name__leaf = __name__.split('.')[-1]
+logger = logging.getLogger("sctl.pp." + __name__leaf)
 
 
 
@@ -93,7 +96,6 @@ def rename_leiden_clusters(
         # reorder based on a specific order if provided
         if reorder_cluster_names and new_cluster_names_order is not None:
             adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(new_cluster_names_order, ordered=True)
-
     return
 
 

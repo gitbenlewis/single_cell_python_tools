@@ -4,6 +4,15 @@ import pandas as pd
 import scanpy as sc
 import numpy as np
 
+# set up logging within the module (not the root logger)
+import logging
+__name__leaf = __name__.split('.')[-1]
+logger = logging.getLogger("sctl.tl." + __name__leaf)
+
+
+# Convenience method for computing the size of objects
+def print_size_in_MB(x):
+    print('{:.3} MB'.format(x.__sizeof__()/1e6))
 # Convenience method for computing the size of objects
 def print_size_in_MB(obj):
     '''Print the size of an object in MB'''
@@ -595,9 +604,9 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     full_table = pd.read_csv(dataset_tables_output_directory+output_prefix+"rank_genes_groups_"+test+".csv",header=0,index_col=0)
     total_cluster_number=len(full_table.columns) # set total cluster number to column # of loreg rank table
     background_list_len=full_table.shape[0]
-    print(f'logreg: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
+    logger.info(f'logreg: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
     foreground_list_len=len((full_table[ :int(background_list_len * top_percentile)]))
-    print(f'logreg: the foreground list is {foreground_list_len} genes long')
+    logger.info(f'logreg: the foreground list is {foreground_list_len} genes long')
 
     for i in range(0, total_cluster_number):
         test_cluster_number=i
@@ -607,8 +616,8 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
 
         background_list=full_table[full_table.columns[test_cluster_number]].squeeze().str.strip().tolist()
         foreground_list=(background_list[ :int(background_list_len * top_percentile)])
-        print(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 background genes {background_list[:3]}, bottom 3 background genes {background_list[-3:]} ")
-        print(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 foreground genes {foreground_list[:3]}, bottom 3 foreground genes {foreground_list[-3:]} ")
+        logger.info(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 background genes {background_list[:3]}, bottom 3 background genes {background_list[-3:]} ")
+        logger.info(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 foreground genes {foreground_list[:3]}, bottom 3 foreground genes {foreground_list[-3:]} ")
         # run enrichr
         # list, dataframe, series inputs are supported
         try:
@@ -631,9 +640,9 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     full_table = pd.read_csv(dataset_tables_output_directory+output_prefix+"rank_genes_groups_"+test+".csv",header=0,index_col=0)
     total_cluster_number=int(len(full_table.columns)/5) # set total cluster number to column # / 4 of wilcox or t test rank table
     background_list_len=full_table.shape[0]
-    print(f'wilcox: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
+    logger.info(f'wilcox: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
     foreground_list_len=len((full_table[ :int(background_list_len * top_percentile)]))
-    print(f'wilcox: the foreground list is {foreground_list_len} genes long')
+    logger.info(f'wilcox: the foreground list is {foreground_list_len} genes long')
 
     for i in range(0, total_cluster_number):
         test_cluster_number=i
@@ -646,8 +655,8 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
         #background_list=full_table[full_table.columns[(test_cluster_number*5)]].tolist()
         background_list=full_table[full_table.columns[(test_cluster_number*5)]].squeeze().str.strip().tolist()
         foreground_list=(background_list[ :int(background_list_len * top_percentile)])
-        print(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 background genes {background_list[:3]}, bottom 3 background genes {background_list[-3:]} ")
-        print(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 foreground genes {foreground_list[:3]}, bottom 3 foreground genes {foreground_list[-3:]} ")
+        logger.info(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 background genes {background_list[:3]}, bottom 3 background genes {background_list[-3:]} ")
+        logger.info(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 foreground genes {foreground_list[:3]}, bottom 3 foreground genes {foreground_list[-3:]} ")
         # run enrichr
         # list, dataframe, series inputs are supported
         try:
@@ -661,7 +670,7 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
                              cutoff=1 # test dataset, use lower value from range(0,1)
                             )
         except Exception as e:
-            print("Something went wrong "+ str(e))
+            logger.info("Something went wrong "+ str(e))
     ############################## wilcox regression test GSEA END
 
 
@@ -671,9 +680,9 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     full_table = pd.read_csv(dataset_tables_output_directory+output_prefix+"rank_genes_groups_"+test+".csv",header=0,index_col=0)
     total_cluster_number=int(len(full_table.columns)/5) # set total cluster number to column # / 5 of wilcox or t test rank table
     background_list_len=full_table.shape[0]
-    print(f't_test: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
+    logger.info(f'wilcox: the full_table  is {full_table.shape[0]} genes long by {full_table.shape[1]} columns for {total_cluster_number} clusters')
     foreground_list_len=len((full_table[ :int(background_list_len * top_percentile)]))
-    print(f't_test: the foreground list is {foreground_list_len} genes long')
+    logger.info(f'wilcox: the foreground list is {foreground_list_len} genes long')
 
     for i in range(0, total_cluster_number):
         test_cluster_number=i
@@ -684,8 +693,8 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
         #background_list=full_table[full_table.columns[(test_cluster_number*2)]].squeeze().str.strip().tolist()
         background_list=full_table[full_table.columns[(test_cluster_number*5)]].squeeze().str.strip().tolist()
         foreground_list=(background_list[ :int(background_list_len * top_percentile)])
-        print(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 background genes {background_list[:3]}, bottom 3 background genes {background_list[-3:]} ")
-        print(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 foreground genes {foreground_list[:3]}, bottom 3 foreground genes {foreground_list[-3:]} ")
+        logger.info(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 background genes {background_list[:3]}, bottom 3 background genes {background_list[-3:]} ")
+        logger.info(f"<CLUSTER {test_cluster_number}> for {test} gene rank top 3 foreground genes {foreground_list[:3]}, bottom 3 foreground genes {foreground_list[-3:]} ")
         # run enrichr
         # list, dataframe, series inputs are supported
         try:
@@ -699,7 +708,7 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
                          cutoff=1 # test dataset, use lower value from range(0,1)
                         )
         except Exception as e:
-            print("Something went wrong "+ str(e))
+            logger.info("Something went wrong "+ str(e))
     ############################## t_test regression test GSEA END
     return
     
@@ -824,9 +833,9 @@ def label_cells_by_single_gene_expression(adata, gene_name1, min_n_counts1, use_
             min_n_counts1=np.percentile(adata[:, [gene_name1]].X.toarray()[:,0][adata[:, [gene_name1]].X.toarray()[:,0]>0], percentile1)
         else:
             min_n_counts1=np.percentile(adata.raw[:, [gene_name1]].X.toarray()[:,0][adata.raw[:, [gene_name1]].X.toarray()[:,0]>0], percentile1)
-        print(f"using {percentile1} percentile of {gene_name1} expressing cells ....  min_n_counts1: {min_n_counts1:.2f}")
+        logger.info(f"using {percentile1} percentile of {gene_name1} expressing cells ....  min_n_counts1: {min_n_counts1:.2f}")
     else:
-        print(f"using explicit count min  .... {gene_name1} min_n_counts1: {min_n_counts1}")
+        logger.info(f"using explicit count min  .... {gene_name1} min_n_counts1: {min_n_counts1}")
 
     # Ensure the gene name exists in the  data
     if gene_name1 in adata.var_names:
@@ -847,7 +856,7 @@ def label_cells_by_single_gene_expression(adata, gene_name1, min_n_counts1, use_
         # sort the categories in adata.obs[gene_name1 + "_pos"]
         adata.obs[gene_name1 + "_pos"]=pd.Categorical(adata.obs[gene_name1 + "_pos"],categories=[gene_name1 + "_pos",f'{gene_name1}_neg_min_{min_n_counts1:.2f}_counts'])
     else:
-        print(f"Gene {gene_name1} not found in  data.")
+        logger.info(f"Gene {gene_name1} not found in  data.")
     return adata
 
 
@@ -878,10 +887,10 @@ def label_cells_by_double_gene_expression(adata, gene_name1, gene_name2,min_n_co
         else:
             min_n_counts1=np.percentile(adata.raw[:, [gene_name1]].X.toarray()[:,0][adata.raw[:, [gene_name1]].X.toarray()[:,0]>0], percentile1)
             min_n_counts2=np.percentile(adata.raw[:, [gene_name2]].X.toarray()[:,0][adata.raw[:, [gene_name2]].X.toarray()[:,0]>0], percentile2)
-        print(f"using {percentile1} percentile of {gene_name1} expressing cells ....  min_n_counts1: {min_n_counts1:.2f}")
-        print(f"using {percentile2} percentile of {gene_name2} expressing cells ....  min_n_counts2: {min_n_counts2:.2f}")
+        logger.info(f"using {percentile1} percentile of {gene_name1} expressing cells ....  min_n_counts1: {min_n_counts1:.2f}")
+        logger.info(f"using {percentile2} percentile of {gene_name2} expressing cells ....  min_n_counts2: {min_n_counts2:.2f}")
     else:
-        print(f"using explicit count min  .... {gene_name1} min_n_counts1: {min_n_counts1}, {gene_name2} min_n_counts2: {min_n_counts2}")
+        logger.info(f"using explicit count min  .... {gene_name1} min_n_counts1: {min_n_counts1}, {gene_name2} min_n_counts2: {min_n_counts2}")
 
     # Ensure the gene name exists in the raw data
     if gene_name1 and gene_name2 in adata.var_names:
@@ -918,7 +927,7 @@ def label_cells_by_double_gene_expression(adata, gene_name1, gene_name2,min_n_co
         #adata.uns[gene_name1 + "_pos" + "_" + gene_name2 + "_pos_colors"]= ["#FF0000","#00FF00","#0000FF","#000000"]#sc.pl.palettes.vega_10
         adata.uns[gene_name1 + "_pos" + "_" + gene_name2 + "_pos_colors"]= sc.pl.palettes.vega_10
     else:
-        print(f"Gene {gene_name1} or {gene_name2} not found in raw data.")
+        logger.info(f"Gene {gene_name1} or {gene_name2} not found in raw data.")
     return adata
 
 

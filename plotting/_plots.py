@@ -9,6 +9,12 @@ from matplotlib.gridspec import GridSpec
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import silhouette_samples
 
+# set up logging within the module (not the root logger)
+import logging
+__name__leaf = __name__.split('.')[-1]
+logger = logging.getLogger("sctl.pl." + __name__leaf)
+
+
 sc.settings.set_figure_params(dpi=80, facecolor='white')
 
 
@@ -26,7 +32,7 @@ def silhouette_score_n_plot(adata,leiden_res='unk',**parameters):
     adata.obs['silhoutte']=samples_silhoutte_scores.tolist()
     silhouette_score_adata=silhouette_score(adata.obsm['X_pca'], adata.obs['leiden'],)
     cluster_number=len(set(adata.obs['leiden'].tolist()))
-    print(f' Average silhoutte score = {silhouette_score_adata} for {cluster_number} clusters at leiden resolution of {leiden_res}')
+    logger.info(f' Average silhoutte score = {silhouette_score_adata} for {cluster_number} clusters at leiden resolution of {leiden_res}')
     #print(f' Average silhoutte score = {silhouette_score_adata} for {cluster_number} clusters at leiden resolution of add this to adata.uns later')
 
     ##################### sillhouette scoreing  #####END
@@ -74,7 +80,7 @@ def silhouette_score_of_obs_key_n_plot(adata,obs_key='leiden',**parameters):
     adata.obs[f'silhoutte_{obs_key}']=samples_silhoutte_scores.tolist()
     silhouette_score_adata=silhouette_score(adata.obsm['X_pca'], adata.obs[obs_key],)
     cluster_number=len(set(adata.obs[obs_key].tolist()))
-    print(f' Average silhoutte score = {silhouette_score_adata} for {cluster_number} number of {obs_key} groups') 
+    logger.info(f' Average silhoutte score = {silhouette_score_adata} for {cluster_number} number of {obs_key} groups') 
     #print(f' Average silhoutte score = {silhouette_score_adata} for {cluster_number} clusters at leiden resolution of add this to adata.uns later')
 
     ##################### sillhouette scoreing  #####END

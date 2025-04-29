@@ -16,8 +16,9 @@ Mostly scanpy wrappers and tools that use adata objects to stream line single ce
 
 # Package import
       import single_cell_python_tools as sctl
+      print(sctl.DATASET_class.__doc__) # access DATASET_class via sctl.DATASET_class
       from single_cell_python_tools.DATASET_class import *
-      print(sctl.DATASET_class.__doc__)
+      print(DATASET_class.__doc__) # after to current namespace access DATASET_class via DATASET_class
    
 # Example_notebooks/
  (most usefull starting point)

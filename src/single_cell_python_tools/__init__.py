@@ -47,11 +47,12 @@ from . import preprocessing as pp          # sub-namespaces
 from . import plotting      as pl
 from . import tools         as tl
 
-from .DATASET_class import DATASET_class  # high-level class
+from . import DATASET_class  # high-level class
+from .DATASET_class import DATASET_class # to access the class as sctl.DATASET_class(...)
 
 __all__: list[str] = [
     "pp",                   # sctl.pp
     "pl",                   # sctl.pl
     "tl",                   # sctl.tl
-    "DATASET_class",   # sctl.sctl_DATASET_class
+    "DATASET_class",   # sctl.DATASET_class
 ]

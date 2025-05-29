@@ -1,6 +1,6 @@
-# sctl_DATASET_class.py
+# DATASET_class.py
 """
-sctl_DATASET_class
+DATASET_class ...
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional, List
 import os, platform, shlex, subprocess, tarfile,pathlib, re, requests
 from urllib.parse import urlparse
 from cgi import parse_header   
+import gzip, shutil
 # -----------------------------------------------------------------------------
 # Third‑party libs
 # -----------------------------------------------------------------------------
@@ -51,12 +52,12 @@ logger = logging.getLogger("sctl." + __name__leaf)
 
 
 class DATASET_class:
-    """End‑to‑end single‑cell workflow with a central *parameters* dictionary."""
+    """End-to-end single-cell workflow with a central *parameters* dictionary..."""
 
     # ------------------------------------------------------------------
     # Init & helpers
     # ------------------------------------------------------------------
-    def __init__(self, parameters: Dict[str, Any]= None):
+    def __init__(self, parameters: Dict[str, Any]= {},**kwargs):
         if not isinstance(parameters, dict):
             raise TypeError("parameters must be a dict – got %s" % type(parameters))
         # 1) load defaults ------------------------
@@ -64,8 +65,14 @@ class DATASET_class:
         self._set_default_parameters()
         # 2) overwrite with user‑provided dict ----------
         self._apply_parameter_overrides()
-        # 3) output directories & Scanpy settings ------------------------
+        # 3) output directories & Scanpy figure path ------------------------
+        if self.output_dir: # if output_dir is set in parameters to not None then set make_empty_output_dirs to True (default is False)
+            self.make_empty_output_dirs=True
         self._set_output_directories()
+        if self.make_empty_output_dirs:
+            self._make_output_dirs()
+        else:
+            logger.warning("output directories will not be created \n add 'make_empty_output_dirs': True in parameters dictionary to create them \n or set output_dir to a valid directory in parameters dictionary ")
         # 4) set adata if provided
         self.adata: Optional[anndata.AnnData] = None
         # 5) set paths
@@ -104,8 +111,10 @@ class DATASET_class:
             "download_output_filename":None,
             "input_file_path":None,
             'file_format':'h5ad',
+            'dataset_prefix_for_10x_triplets':'',
             "output_prefix":'GSE_',
             "output_dir":None,
+            'make_empty_output_dirs': False,  # make empty output dirs if True
             "n_jobs": 4,
 
             'organism' : 'human',
@@ -200,12 +209,25 @@ class DATASET_class:
             # set default output dir to current working directory and prefix to 'dataset_'
             self.output_dir = os.getcwd()
             self.output_prefix = "dataset_"
+            logger.warning(f"output dir and and output prefix not set.\n Using defaults dir: {self.output_dir} and dataset specfic file prefix: {self.output_prefix}")
         base = Path(self.output_dir) / self.output_prefix
         self.tables_dir = base / "tables"
         self.figures_dir = base / "figures"
+        #self.tables_dir.mkdir(parents=True, exist_ok=True)
+        #self.figures_dir.mkdir(parents=True, exist_ok=True)
+        # set scanpy settings for figures directory
+        sc.settings.figdir = str(self.figures_dir)
+        
+
+    def _make_output_dirs(self) -> None:
+        """Create output directories for tables and figures."""
+        if not self.output_dir:
+            raise ValueError("output_dir must be set")
         self.tables_dir.mkdir(parents=True, exist_ok=True)
         self.figures_dir.mkdir(parents=True, exist_ok=True)
-        sc.settings.figdir = str(self.figures_dir)
+        logger.info(f"made output directories:\n"
+                    f"  tables: {self.tables_dir}\n"
+                    f"  figures: {self.figures_dir}")
 
     # ------------------------------------------------------------------
     # I/O – NEW wget/curl implementation
@@ -269,7 +291,6 @@ class DATASET_class:
         # set path to the parent directory of the downloaded file
         self.path = str(self.download_dest_path)
         logger.debug(f"Set self.path to {self.path}")
-
         return self
     
     # ------------------------------------------------------------------
@@ -329,6 +350,84 @@ class DATASET_class:
         #return [str(p) for p in members]
         return self
 
+    def decompress_downloaded_files(self,
+        keep_archives: bool = True,
+        gunzip_single_files: bool = True,
+        unpack_archive: bool = False,
+         **kwargs ):
+        """
+        Decompress any archives sitting in ``self.parameters["download_output_dir"]``.
+        Parameters
+        ----------
+        keep_archives : bool, default True
+            If ``False`` the original archive (``*.tar.gz``, ``*.zip``…) is deleted
+            after successful extraction.
+        gunzip_single_files : bool, default False
+            If ``True`` also expand lone ``*.gz`` files (e.g. ``matrix.mtx.gz``) in
+            place; otherwise they are skipped.
+        Returns
+        -------
+        self
+            Enables call-chaining.
+        """
+        out_dir = Path(self.parameters["download_output_dir"]).expanduser().resolve()
+        if not out_dir.exists():
+            raise FileNotFoundError(f"Download directory {out_dir} does not exist")
+        for path in out_dir.iterdir():
+            if path.suffixes[-2:] == [".tar", ".gz"] or path.suffix == ".tgz":
+                # ---------- tar.gz / tgz ----------
+                logger.info(f"Extracting {path.name} …" )
+                with tarfile.open(path, "r:gz") as tar:
+                    tar.extractall(path=out_dir)
+                if not keep_archives:
+                    path.unlink()
+            elif path.suffix == ".tar" and not unpack_archive:
+                # ---------- plain tar ----------
+                logger.info(f"Extracting {path.name} …")
+                with tarfile.open(path, "r") as tar:
+                    tar.extractall(path=out_dir)
+                if not keep_archives:
+                    path.unlink()
+            elif path.suffix == ".zip":
+                # ---------- zip ----------
+                logger.info(f"Extracting {path.name} …")
+                shutil.unpack_archive(path, out_dir, "zip")
+                if not keep_archives:
+                    path.unlink()
+            elif path.suffix == ".gz" and gunzip_single_files:
+                # ---------- lone .gz (e.g. matrix.mtx.gz) ----------
+                target = path.with_suffix("")  # strip .gz
+                logger.info(f"Decompressing {path.name} > {target.name}")
+                with gzip.open(path, "rb") as src, open(target, "wb") as dst:
+                    shutil.copyfileobj(src, dst)
+                if not keep_archives:
+                    path.unlink()
+            else:
+                logger.debug(f"No decompression needed for {path.name}")
+        return self
+    
+    def fixtypo_in_downloaded_file_name(self,
+                                                  downloaded_file='',
+                                                renamed_downloaded_file_name=''):
+        '''Fix the typo in downloaded file name '''
+        # import os and shutil to rename the file
+        import os
+        import shutil
+        downloaded_file_dir=self.parameters['download_output_dir']
+        # check if the file exists
+        if not os.path.exists(os.path.join(downloaded_file_dir, downloaded_file)):
+            #raise FileNotFoundError(f"File {downloaded_file} does not exist in {downloaded_file_dir}")
+            logger.warning(f"File {downloaded_file} does not exist in {downloaded_file_dir}")
+        # check if the new file name exists
+        if os.path.exists(os.path.join(downloaded_file_dir, renamed_downloaded_file_name)):
+            #raise FileExistsError(f"File {renamed_downloaded_file_name} already exists in {downloaded_file_dir}")
+            logger.warning(f"File {renamed_downloaded_file_name} already exists in {downloaded_file_dir}")
+        # rename 'downloaded_file' to 'renamed_downloaded_file_name'
+        shutil.move(os.path.join(downloaded_file_dir, downloaded_file),
+                    os.path.join(downloaded_file_dir,renamed_downloaded_file_name))
+        logger.info(f"Renamed {downloaded_file} to {renamed_downloaded_file_name} in {downloaded_file_dir}")
+        return self
+
     # ------------------------------------------------------------------
     # Core pipeline steps 
     # QC
@@ -347,6 +446,9 @@ class DATASET_class:
             Path to the file to load.
         file_format : str
             Format of the file to load. Can be one of 'h5ad' or "prefix_10x", '10x'.
+        dataset_prefix_for_10x_triplets : str
+            Prefix for 10X triplets dataset. Used only if file_format is 'prefix_10x'. do not include the underscore at the end.
+            if None or '', the prefix will be inferred from the barcodes file in the directory.
         kwargs : dict
             Additional keyword arguments to pass to the loading function.
         Returns
@@ -354,6 +456,8 @@ class DATASET_class:
         """
         kw = self._merge( kwargs)
         file_format = kw.get("file_format", "h5ad")
+        dataset_prefix_for_10x_triplets = kw.get("dataset_prefix_for_10x_triplets", None)
+
         if self.path== "" and self.input_file_path == "":
             raise ValueError("path and input_file_path must be set")
         if self.path== "":
@@ -365,14 +469,19 @@ class DATASET_class:
             ########## set self.loaded_file_format to h5ad
             self.loaded_file_format = "h5ad"
         elif file_format == "prefix_10x":
-            # parse the 10X file prefix from the path directory
-            files_in_self_path = os.listdir(self.path)
-            barcodes_files = [f for f in files_in_self_path if 'barcodes' in f]
-            if len(barcodes_files) == 0:
-                raise ValueError(f"No barcodes files found in {self.path}")
-            barcode_file = barcodes_files[0]
-            self.file_prefix_10x = barcode_file.split('_')[0]+'_'
-            logger.debug(f"10X barcode file: {barcode_file} with prefix {self.file_prefix_10x}")
+            if not dataset_prefix_for_10x_triplets:
+                # parse the 10X file prefix from the path directory
+                files_in_self_path = os.listdir(self.path)
+                barcodes_files = [f for f in files_in_self_path if 'barcodes' in f]
+                if len(barcodes_files) == 0:
+                    raise ValueError(f"No barcodes files found in {self.path}")
+                barcode_file = barcodes_files[0]
+                self.file_prefix_10x = barcode_file.split('_')[0]+'_'
+                logger.debug(f"10X barcode file: {barcode_file} with prefix {self.file_prefix_10x}")
+            else:
+                self.file_prefix_10x = dataset_prefix_for_10x_triplets+'_'
+                logger.debug(f"Using provided 10X prefix: {self.file_prefix_10x}")
+            ########## load the 10X data with the prefix
             self.adata = sc.read_10x_mtx(self.path,prefix=self.file_prefix_10x)
             ########## set self.loaded_file_format to prefix_10x
             self.loaded_file_format = "prefix_10x"
@@ -577,6 +686,13 @@ class DATASET_class:
         rename_clusters = kw.get("rename_cluster",False)
         # plot the marker genes
         marker_genes = kw.get("marker_genes", self.adata.uns["parameters"]['umap_marker_gene_list'])
+        # check if the marker_genes are in the adata.var_names
+        if not all(gene in self.adata.var_names for gene in marker_genes):
+            missing_genes = [gene for gene in marker_genes if gene not in self.adata.var_names]
+            logger.warning(f"Marker genes {missing_genes} are not in the adata.var_names")
+            # remove the missing genes from the marker_genes list
+            marker_genes = [gene for gene in marker_genes if gene in self.adata.var_names]
+            logger.info(f"Using marker genes {marker_genes} for plotting")
         if self.leiden_clusters_renamed:
             additonal_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  
         elif self.leiden_clustering_done:

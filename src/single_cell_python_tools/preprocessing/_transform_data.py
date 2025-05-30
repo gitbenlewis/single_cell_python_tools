@@ -69,7 +69,7 @@ def process2scaledPCA(adata,
     '''
     logger.info(f" running process2scaledPCA adata at start \n {adata}")
     ################################## library-size correct the data:
-    logger.info(f"Step 1) library-size correct and Logarithmize (optional) the data ")
+    logger.info(f"process2scaledPCA()-Step 1) library-size correct and Logarithmize (optional) the data ")
     logger.info(f"{normalize_total_target_sum} : normalize_total_target_sum ")
     logger.info(f"{logarithmize} : Logarithmize (optional) the data ")
     adata=norm_log(adata,normalize_total_target_sum,logarithmize, **parameters)
@@ -89,12 +89,12 @@ def process2scaledPCA(adata,
         adata=HVG_selection_log_norm_seurat_v3(adata,filter_HVG,HVG_n_top_genes, **parameters)
 
     #################################  regress_out_anotated_QC_genes
-    logger.info(f"Step 2) regress_out_anotated_QC_genes (optional)")
+    logger.info(f"process2scaledPCA()-Step 2) regress_out_anotated_QC_genes (optional)")
     regress_out_anotated_QC_genes(adata, regress_mt,regress_ribo, regress_malat1,regress_hb, **parameters)
-    logger.info(f"Step 3) scale the data (optional) : {scale} ")
+    logger.info(f"process2scaledPCA()-Step 3) scale the data (optional) : {scale} ")
     if scale==True:
         scale_func(adata,scale_max_std_value=scale_max_std_value, **parameters)
-    logger.info(f"Step 4) cell cycle score (optional)  ")
+    logger.info(f"process2scaledPCA()-Step 4) cell cycle score (optional)  ")
     logger.info(f" {cell_cycle_score} : calculate cell cycle score (optional) ")
     logger.info(f" {regress_cell_cycle_score} : regressing out cell cycle score (optional) ")
     if cell_cycle_score ==True:
@@ -102,7 +102,7 @@ def process2scaledPCA(adata,
         calc_cell_cycle_score(adata,organism=organism)
     if regress_cell_cycle_score ==True:
         regress_cell_cycle_score_func(adata)
-    logger.info(f"Step 5) PCA analysis   ")
+    logger.info(f"process2scaledPCA()-Step 5) PCA analysis   ")
     if PCA ==True:
         PCA_func(adata, **parameters)
     else:
@@ -124,44 +124,70 @@ def PCA_func(adata, **parameters):
     return 
 
 
-def norm_log(adata,normalize_total_target_sum=1e4, save_counts_layer=True, logarithmize=True, **parameters):
+def norm_log(adata,normalize_total_target_sum=1e4, save_counts_layer=True, logarithmize=True,use_lognorm_for_raw=False, **parameters):
     '''
-    def norm_log(adata,normalize_total_target_sum=1e4, save_counts_layer=True, logarithmize=True, **parameters):
-    #### code
     logger.info(f'sctl.pp.norm_log() ')
-    logger.info(f'Step 1) preserve counts (optional) : {save_counts_layer} ')
+    logger.info(f'norm_log()-Step 1) preserve counts (optional) : {save_counts_layer} ')
     if save_counts_layer==True:
         logger.info(f'save raw counts (adata.X) to adata.layers["counts"]')
         adata.layers["counts"] = adata.X.copy()  # preserve counts
-    logger.info(f'Step 2) library-size correct each observation target_sum= {normalize_total_target_sum} ')
     ################################## library-size correct  the data:
+    logger.info(f'norm_log()-Step 2) library-size correct each observation target_sum= {normalize_total_target_sum} ')
     sc.pp.normalize_total(adata, target_sum=normalize_total_target_sum)
-    logger.info(f'Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
-    adata.raw = adata.copy()    #### save normalized counts to adata.raw not logerized
-    if logarithmize==True:
-        logger.info(f'Step 4) logarithmize the data (optional): {logarithmize}')
-        sc.pp.log1p(adata)
-    else:
-         logger.info(f'data not logerized because logarithmize (switch)= {logarithmize}')
+    ################################## logarithmize the data (optional) and save to adata.raw:
+    if use_lognorm_for_raw==False:
+        logger.info(f' using normalized data for adata.raw set becasue use_lognorm_for_raw = {use_lognorm_for_raw}')
+        logger.info(f'norm_log()-Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
+        adata.raw = adata.copy()    #### save normalized counts to adata.raw not logerized
+        if logarithmize==True:
+            logger.info(f'norm_log()-Step 4) logarithmize the data (optional): {logarithmize}')
+            sc.pp.log1p(adata)
+        else:
+            logger.info(f'data not logerized because logarithmize (switch)= {logarithmize}')
+    elif use_lognorm_for_raw==True:
+        if logarithmize==True:
+            logger.info(f' using log(normalized) data for adata.raw set becasue use_lognorm_for_raw = {use_lognorm_for_raw}')
+            logger.info(f'norm_log()-Step 3) logarithmize the data (optional): {logarithmize}')
+            sc.pp.log1p(adata)
+            logger.info(f'norm_log()-Step 4) save lognorm for adata.raw , saving lognormed data (logCP10k) to adata.raw ')
+            adata.raw = adata.copy()
+        else:
+            logger.warning(f'  use_lognorm_for_raw = {use_lognorm_for_raw} and logarithmize = {logarithmize} ... this is not recommended, adata.raw will be saved as logCP10k but not logerized')
+            logger.info(f'norm_log()-Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
+            adata.raw = adata.copy()
     return adata
-    
     '''
     logger.info(f'sctl.pp.norm_log() ')
-    logger.info(f'Step 1) preserve counts (optional) : {save_counts_layer} ')
+    logger.info(f'norm_log()-Step 1) preserve counts (optional) : {save_counts_layer} ')
     if save_counts_layer==True:
         logger.info(f'save raw counts (adata.X) to adata.layers["counts"]')
         adata.layers["counts"] = adata.X.copy()  # preserve counts
-    logger.info(f'Step 2) library-size correct each observation target_sum= {normalize_total_target_sum} ')
     ################################## library-size correct  the data:
+    logger.info(f'norm_log()-Step 2) library-size correct each observation target_sum= {normalize_total_target_sum} ')
     sc.pp.normalize_total(adata, target_sum=normalize_total_target_sum)
-    logger.info(f'Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
-    adata.raw = adata.copy()    #### save normalized counts to adata.raw not logerized
-    if logarithmize==True:
-        logger.info(f'Step 4) logarithmize the data (optional): {logarithmize}')
-        sc.pp.log1p(adata)
-    else:
-         logger.info(f'data not logerized because logarithmize (switch)= {logarithmize}')
+    ################################## logarithmize the data (optional) and save to adata.raw:
+    if use_lognorm_for_raw==False:
+        logger.info(f' using normalized data for adata.raw set becasue use_lognorm_for_raw = {use_lognorm_for_raw}')
+        logger.info(f'norm_log()-Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
+        adata.raw = adata.copy()    #### save normalized counts to adata.raw not logerized
+        if logarithmize==True:
+            logger.info(f'norm_log()-Step 4) logarithmize the data (optional): {logarithmize}')
+            sc.pp.log1p(adata)
+        else:
+            logger.info(f'data not logerized because logarithmize (switch)= {logarithmize}')
+    elif use_lognorm_for_raw==True:
+        if logarithmize==True:
+            logger.info(f' using log(normalized) data for adata.raw set becasue use_lognorm_for_raw = {use_lognorm_for_raw}')
+            logger.info(f'norm_log()-Step 3) logarithmize the data (optional): {logarithmize}')
+            sc.pp.log1p(adata)
+            logger.info(f'norm_log()-Step 4) save lognorm for adata.raw , saving lognormed data (logCP10k) to adata.raw ')
+            adata.raw = adata.copy()
+        else:
+            logger.warning(f'  use_lognorm_for_raw = {use_lognorm_for_raw} and logarithmize = {logarithmize} ... this is not recommended, adata.raw will be saved as logCP10k but not logerized')
+            logger.info(f'norm_log()-Step 3) save normalized counts to adata.raw not logerized and not scaled \n adata.raw used for plotting')
+            adata.raw = adata.copy()
     return adata
+
 
 
         

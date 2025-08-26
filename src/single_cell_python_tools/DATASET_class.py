@@ -93,9 +93,9 @@ class DATASET_class:
         logger.info(f" self.download_url {self.download_url}")
         logger.info(f" self.download_output_dir {self.download_output_dir}")
         logger.info(f" self.download_output_filename {self.download_output_filename}")
-        logger.info(f" self.input_file_path {self.input_file_path}")
-        logger.info(f" self.output_prefix {self.output_prefix}")
-        logger.info(f" self.output_dir {self.output_dir}")
+        logger.info(f" self.input_file_path (set to) {self.input_file_path}")
+        logger.info(f" self.output_prefix (set to) {self.output_prefix}")
+        logger.info(f" self.output_dir (set to) {self.output_dir}")
         
         
 
@@ -111,7 +111,7 @@ class DATASET_class:
             "download_output_filename":None,
             "input_file_path":None,
             'file_format':'h5ad',
-            'dataset_prefix_for_10x_triplets':'',
+            'dataset_prefix_for_10x_triplets':'',# include all characters up to barcodes/features (underscore)
             "output_prefix":'GSE_',
             "output_dir":None, 
             'make_empty_output_dirs': False,  # make empty output dirs if True or if output_dir is not none
@@ -469,6 +469,8 @@ class DATASET_class:
         kw = self._merge( kwargs)
         file_format = kw.get("file_format", "h5ad")
         dataset_prefix_for_10x_triplets = kw.get("dataset_prefix_for_10x_triplets", None)
+        
+        logger.info(f"running self.load_data with format {file_format}")
 
         #.) check if outputdirectories exist if not make them 
         self._check_if_output_directories_exist()
@@ -496,7 +498,7 @@ class DATASET_class:
                 self.file_prefix_10x = barcode_file.split('_')[0]+'_'
                 logger.debug(f"10X barcode file: {barcode_file} with prefix {self.file_prefix_10x}")
             else:
-                self.file_prefix_10x = dataset_prefix_for_10x_triplets+'_'
+                self.file_prefix_10x = dataset_prefix_for_10x_triplets
                 logger.debug(f"Using provided 10X prefix: {self.file_prefix_10x}")
             ########## load the 10X data with the prefix
             self.adata = sc.read_10x_mtx(self.path,prefix=self.file_prefix_10x)

@@ -5,7 +5,7 @@ dependencies:
   # ─── core Python stack ──────────────────────────────────────────
   - python >=3.10,<3.11            # match the 3.10 you’re using
   - pip
-  - numpy 1.26.*                   # latest stable; avoid 2.x prerelease wheels
+  - numpy 2.2                   # latest stable; avoid 2.x prerelease wheels
   - pandas >=2.2
   - scipy >=1.14
   - scikit-learn >=1.5
@@ -29,9 +29,10 @@ dependencies:
   - ipykernel >=6.29
   - jupyterlab_widgets
   - widgetsnbextension
+  - session-info
   - session-info2
   - psutil
 
   # ─── install your package in editable mode ─────────────────────
-  - pip:
-      - -e .     # assumes you run 'conda env create -f sctl.yaml' in repo root
+  #- pip:
+  #    - -e .     # assumes you run 'conda env create -f sctl.yaml' in repo root

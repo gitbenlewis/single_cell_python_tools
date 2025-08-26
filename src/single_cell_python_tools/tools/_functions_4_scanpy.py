@@ -714,6 +714,7 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     
 from typing import Union, Sequence, Optional, Callable
 from anndata import AnnData
+
 def filter_obs(data: Union[AnnData,], var: Union[str, Sequence[str]], func: Optional[Callable] = None) -> None:
     """
     Filter observations (samples or cells) in-place
@@ -1014,10 +1015,182 @@ def average_feature_expression(adata, groupby_key, layer=None, use_raw=False, lo
     avg_expression_df = pd.DataFrame(avg_expression_list, index=unique_groups, columns=var_names)
 
     return avg_expression_df
+'''
+Neuron_subtype_split_avg_expression_df = sctl.tl.average_feature_expression(adata, groupby_key, use_raw=True, log1p=False, zscore=False)
+df=Neuron_subtype_split_avg_expression_df[gene_list]
+df = df.reindex(columns=gene_list)
+display(df)
 
+figsize=(7,10)
+fig1, axes = plt.subplots(nrows=1, ncols=1,figsize=figsize)
+#df.plot.barh(stacked=False,ax=axes).legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), borderaxespad=0)
+
+df.plot.barh(stacked=False,ax=axes)
+# Customize legend and axes
+handles, labels = axes.get_legend_handles_labels()
+legend_mapping = {label: handle for label, handle in zip(labels, handles)}
+axes.legend([legend_mapping[gene] for gene in gene_list], gene_list, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=4, frameon=False)
+
+axes.invert_yaxis()
+# Add axis labels
+axes.set_xlabel('CP10K')
+axes.set_ylabel(groupby_key)  # Add meaningful y-axis label (optional)
+plt.tight_layout()
+plt.show()
+'''
+
+def average_obs_feature_per_group(adata, groupby_key, obs_keys):
+    """
+    Calculate the average expression of specified features per group.
+    
+    Parameters:
+    - adata: AnnData object
+    - groupby_key: Key in adata.obs to group by
+    - obs_keys: List of feature names to average
+    
+    Returns:
+    - DataFrame with average expression per group
+    """
+    # Group by the specified key and calculate the mean for each feature
+    avg_expression_df = (
+        adata.obs
+             .groupby(groupby_key, observed=True)[obs_keys]
+             .mean()                                   # mean per cluster
+             .loc[adata.obs[groupby_key].cat.categories]  # keep the original category order
+    )
+    return avg_expression_df
+
+'''
+df=avg_expression_df
+display(df)
+
+figsize=(10,10)
+fig1, axes = plt.subplots(nrows=1, ncols=1,figsize=figsize)
+#df.plot.barh(stacked=False,ax=axes).legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), borderaxespad=0)
+
+df.plot.barh(stacked=False,ax=axes)
+# Customize legend and axes
+handles, labels = axes.get_legend_handles_labels()
+legend_mapping = {label: handle for label, handle in zip(labels, handles)}
+axes.legend([legend_mapping[gene] for gene in obs_keys], obs_keys, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=4, frameon=False)
+
+axes.invert_yaxis()
+# Add axis labels
+axes.set_xlabel('CP10K')
+axes.set_ylabel(groupby_key)  # Add meaningful y-axis label (optional)
+plt.tight_layout()
+plt.show()
+
+'''
+
+
+
+def make_df_obs_adataX(
+    adata,
+    layer: str | None = None,
+    index: str | None = None,
+    varcolumns: list[str] | str | None = None,
+    include_obs: bool = True,
+    obscolumns:  list[str] | str | None = None,
+    use_raw: bool = False
+):
+    """
+    
+    Build a :class:`pandas.DataFrame` from an :class:`~anndata.AnnData` object.
+
+    The function pulls an expression matrix from either
+    ``adata.X`` / ``adata.layers`` (default) or ``adata.raw``
+    (when *use_raw=True*) and optionally concatenates cell metadata
+    (``adata.obs``) so that downstream analyses can be done with a single
+    DataFrame.
+
+    Parameters
+    ----------
+    adata
+        Annotated data object to convert.
+    layer
+        Name of the layer to use instead of the main matrix.  
+        Ignored if *layer=None*.
+    index
+        Column in ``adata.obs`` that should become the DataFrame's index.
+    varcolumns
+        Gene/feature labels.  
+        * ``None`` - use ``.var_names`` that correspond to the chosen matrix.  
+        * ``str`` - use that column in ``.var``.  
+        * ``list`` -  
+          - one element → as above;  
+          - ≥2 elements → build a :class:`pandas.MultiIndex`.
+    include_obs
+        If *True*, prepend ``adata.obs`` to the expression table.
+    use_raw
+        If *True*, pull expression values (and associated ``.var`` table) from
+        ``adata.raw`` instead of the main object.
+
+    Returns
+    -------
+    pandas.DataFrame
+        * ``shape = (n_obs, n_obs_meta + n_vars)`` when *include_obs=True*  
+        * ``shape = (n_obs, n_vars)`` when *include_obs=False*
+
+    Notes
+    -----
+    If the matrix is sparse the helper converts it to dense with
+    ``toarray()``, trading memory for convenience.  For very large data
+    sets consider:
+
+    ```python
+    from pandas.api.extensions import SparseDtype
+    df = pd.DataFrame.sparse.from_spmatrix(X, index=idx, columns=vars)
+    ```
+    to keep the DataFrame itself sparse.
+    """
+
+    # ──────────────────────────────────────────────────────────────
+    import pandas as pd
+    from anndata import AnnData
+    # Set up feature (variable) columns
+    var_source = adata.raw if use_raw else adata            # NEW
+    if varcolumns is None:
+        #varcolumns = adata.var_names
+        varcolumns = var_source.var_names                   # use var_source
+    elif isinstance(varcolumns, str):
+        #varcolumns = adata.var[varcolumns]
+        varcolumns = var_source.var[varcolumns]             # use var_source
+    elif isinstance(varcolumns, list):
+        if len(varcolumns)==1:
+            varcolumns = adata.var[varcolumns[0]]
+        else:
+            #varcolumns = adata.var[varcolumns]
+            varcolumns = var_source.var[varcolumns]        # use var_source
+            varcolumns = pd.MultiIndex.from_arrays(varcolumns.values.T, names=varcolumns.columns)  
+    # Set up the index
+    index=adata.obs_names if index is None else adata.obs[index]
+    # handle if use_raw =True 
+    if use_raw and adata.raw is not None:
+        X = adata.raw.X if layer is None else adata.raw.layers[layer] # Use the raw or raw.layer 
+        logger.info(f'Using raw data from adata.raw.{layer}.' if layer else 'Using raw data from adata.raw.X.')
+    elif layer is not None and layer in adata.layers: 
+        X = adata.layers[layer] # Use the specified layer 
+        logger.info(f'Using data from adata.layers.{layer}.')
+    else:
+        X = adata.X # Use the main data matrix
+        logger.info('Using data from adata.X.')
+    
+    if hasattr(X, "toarray"):  # Convert sparse matrix to dense if necessary
+        X = X.toarray()
+
+    df_adataX=pd.DataFrame(X,columns=varcolumns,index =index  )
+
+    if include_obs:
+        df_obs=adata.obs[obscolumns] if obscolumns is not None else adata.obs.copy()
+        df_obs_adataX= pd.concat([df_obs,df_adataX], axis=1)
+        return df_obs_adataX
+    return df_adataX
 
 # ------------------------------------------------------------------
 # Auto-export: collect every function or class defined *in this file*
 # whose name does NOT start with an underscore
 # ------------------------------------------------------------------
 __all__ = [name for name in dir() if not name.startswith("_")]
+
+

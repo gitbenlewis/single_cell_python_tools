@@ -66,13 +66,13 @@ class DATASET_class:
         # 2) overwrite with user‑provided dict ----------
         self._apply_parameter_overrides()
         # 3) output directories & Scanpy figure path ------------------------
-        if self.output_dir: # if output_dir is set in parameters to not None then set make_empty_output_dirs to True (default is False)
-            self.make_empty_output_dirs=True
         self._set_output_directories()
-        if self.make_empty_output_dirs:
+        self._check_if_output_directories_exist(verbose=True)
+        if self.parameters.get('make_empty_output_dirs', False):
+            logger.warning("'make_empty_output_dirs' found in parameters and set to True \n output directories will be created empty")
             self._make_output_dirs()
-        else:
-            logger.warning("output directories will not be created \n add 'make_empty_output_dirs': True in parameters dictionary to create them \n or set output_dir to a valid directory in parameters dictionary ")
+        else: 
+            logger.warning('(parent) output directory set and prefix set but not made\n add \'make_empty_output_dirs\': True in parameters dictionary to create them at init')
         # 4) set adata if provided
         self.adata: Optional[anndata.AnnData] = None
         # 5) set paths
@@ -113,8 +113,8 @@ class DATASET_class:
             'file_format':'h5ad',
             'dataset_prefix_for_10x_triplets':'',
             "output_prefix":'GSE_',
-            "output_dir":None,
-            'make_empty_output_dirs': False,  # make empty output dirs if True
+            "output_dir":None, 
+            'make_empty_output_dirs': False,  # make empty output dirs if True or if output_dir is not none
             "n_jobs": 4,
 
             'organism' : 'human',
@@ -203,7 +203,7 @@ class DATASET_class:
         return {**default, **overrides}
     
     def _set_output_directories(self):
-        """Create output directories for tables and figures."""
+        """set path for output directories for tables and figures. and scanpy figure dir"""
         if not self.output_dir or not self.output_prefix:
             #raise ValueError("output_dir and output_prefix must be set")
             # set default output dir to current working directory and prefix to 'dataset_'
@@ -217,12 +217,24 @@ class DATASET_class:
         #self.figures_dir.mkdir(parents=True, exist_ok=True)
         # set scanpy settings for figures directory
         sc.settings.figdir = str(self.figures_dir)
-        
+
+    def _check_if_output_directories_exist(self, verbose: bool | None = False) -> None:
+        """Check if output directories for tables and figures exist."""
+        if self.tables_dir.exists() and self.figures_dir.exists():
+            self.output_directories_exist=True
+            if verbose:
+                logger.warning(f'output directories exist. self.output_directories_exist set to True') 
+        else:
+            self.output_directories_exist=False
+            if verbose:
+                logger.warning("One or more output directories do not exist. self.output_directories_exist set to False")
 
     def _make_output_dirs(self) -> None:
         """Create output directories for tables and figures."""
         if not self.output_dir:
-            raise ValueError("output_dir must be set")
+            #raise ValueError("output_dir must be set")
+            logger.warning("output_dir not set. setting now")
+            self._set_output_directories()
         self.tables_dir.mkdir(parents=True, exist_ok=True)
         self.figures_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"made output directories:\n"
@@ -458,6 +470,11 @@ class DATASET_class:
         file_format = kw.get("file_format", "h5ad")
         dataset_prefix_for_10x_triplets = kw.get("dataset_prefix_for_10x_triplets", None)
 
+        #.) check if outputdirectories exist if not make them 
+        self._check_if_output_directories_exist()
+        if not self.output_directories_exist:
+            self._make_output_dirs()
+
         if self.path== "" and self.input_file_path == "":
             raise ValueError("path and input_file_path must be set")
         if self.path== "":
@@ -670,7 +687,7 @@ class DATASET_class:
     # Ploting processed data   : Core pipeline step
     # ------------------------------------------------------------------
     def marker_gene_umaps(self, **kwargs):
-        """  silhouette_walk_Largest_drop"""
+        """  marker_gene_umaps"""
         # set up the parameters for the function
         kw = self._merge( kwargs)
         # Custom colormap where zero values are represented by grey

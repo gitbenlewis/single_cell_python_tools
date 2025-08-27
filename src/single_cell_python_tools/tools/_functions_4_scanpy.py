@@ -341,11 +341,11 @@ def rank_genes_obscat1_vs_obscat2(
 
 # write function for differential gene expression analysis between two groups defined by a categorical variable in adata.obs but dont use the sc.tl.rank_genes_groups function use the t-test function from scipy.stats and the statsmodels.stats.multitest.multipletests function to correct for multiple testing return a dataframe with the gene names, t-test p-value, t-test log fold change, and corrected p-value for each gene. have the function to use a specfic adata layer instead of the adata.X matrix
 def diff_exp(
-    adata: anndata.AnnData | None = None,
+    adata: anndata.AnnData | None,
     groupby: str,
     group1: str,
     group2: str,
-    layer: str | None = None
+    layer: str | None,
 ):
     """
     Parameters

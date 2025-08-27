@@ -60,7 +60,6 @@ def rename_leiden_clusters(
     **parameters: Any
 ):
     '''
-    rename_leiden_clusters_old(adata,parameters=None,rename_cluster=False,new_cluster_names=None,new_obs_key='Cell_Clusters_Named'):
     '''
     if rename_cluster==True:
         leiden_number_list=adata.obs['leiden'].value_counts().index.tolist()
@@ -78,12 +77,13 @@ def rename_leiden_clusters(
     rename_cluster: bool = False,
     new_cluster_names: List[str] | None = None,
     new_obs_key: str = 'Cell_Clusters_Named',
+    make_new_obs_key_categorical: bool = True,
     reorder_cluster_names: bool = False,
     new_cluster_names_order: List[str] | None = None,
     **parameters: Any
 ):
     '''
-    Rename Leiden clusters using a provided list of new cluster names.
+    rename Leiden clusters using a provided list of new cluster names.
     Parameters:
     - adata: AnnData object
     - rename_cluster: Boolean flag to perform renaming
@@ -95,22 +95,24 @@ def rename_leiden_clusters(
     if rename_cluster:
         leiden_number_list = adata.obs['leiden'].value_counts().index.tolist()
         cluster_name_dict = dict(zip(leiden_number_list, new_cluster_names))
-
         # Map and check for missing mappings
         mapped = adata.obs['leiden'].map(cluster_name_dict)
-
         if mapped.isna().any():
             categories = new_cluster_names + ['Unknown']
             mapped = mapped.fillna('Unknown')
         else:
             categories = new_cluster_names
-
-        adata.obs[new_obs_key] = pd.Categorical(mapped, categories=categories, ordered=reorder_cluster_names)
-        # reorder categories based on input list
-        adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(categories, ordered=True)
-        # reorder based on a specific order if provided
-        if reorder_cluster_names and new_cluster_names_order is not None:
-            adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(new_cluster_names_order, ordered=True)
+        # make unique list of categories keep the order of first to appear in categories
+        categories = pd.Series(categories).unique().tolist()
+        # make new obs column
+        adata.obs[new_obs_key] = mapped
+        if make_new_obs_key_categorical:
+            adata.obs[new_obs_key] = pd.Categorical(mapped, categories=categories, ordered=reorder_cluster_names)
+            # reorder categories based on input list
+            adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(categories, ordered=True)
+            # reorder based on a specific order if provided
+            if reorder_cluster_names and new_cluster_names_order is not None:
+                adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(new_cluster_names_order, ordered=True)
     return
 
 

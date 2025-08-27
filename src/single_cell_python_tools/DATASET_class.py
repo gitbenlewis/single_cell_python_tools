@@ -115,7 +115,7 @@ class DATASET_class:
             "output_prefix":'GSE_',
             "output_dir":None, 
             'make_empty_output_dirs': False,  # make empty output dirs if True or if output_dir is not none
-            "n_jobs": 4,
+            "n_jobs": 1,
 
             'organism' : 'human',
             
@@ -164,7 +164,8 @@ class DATASET_class:
             "logarithmize":True, # scanpy default True
             "scale":True, # scanpy default True
             "scale_max_std_value":None, # 10 often used
-                
+            "save_counts_layer": True, #save counts in adata.layers['counts'] before normalization
+
             ####regression on off switches
             "regress_mt" : False,
             "regress_ribo" : False,
@@ -549,11 +550,11 @@ class DATASET_class:
         """ calculate_qc_metrics"""
         # set up the parameters for the function
         kw = self._merge( kwargs)
-        sctl.pp.calculate_qc_metrics(self.adata)
+        sctl.pp.calculate_qc_metrics(self.adata,)
         return self
 
     
-    def annotate_n_view_adata_raw_counts(self,):
+    def annotate_n_view_adata_raw_counts(self,**kwarg):
         """  Annotate technical gene groups  and calculate qc metrics"""
         self.annotate_QC_genes()
         self.calculate_qc_metrics()
@@ -697,7 +698,7 @@ class DATASET_class:
         cmap = mcolors.ListedColormap(['gray'] + list(plt.cm.viridis(np.linspace(0, 1, 256))))
         # extract parameters from kw
         vmin = kw.get("vmin", 0)
-        vmax = kw.get("vmax", 'p98')
+        vmax = kw.get("vmax", None)
         ncols = kw.get("ncols", 6)
         palette= kw.get("palette", sc.pl.palettes.godsnot_102[1:])
         wspace= kw.get("wspace", None)
@@ -705,12 +706,13 @@ class DATASET_class:
         rename_clusters = kw.get("rename_cluster",False)
         # plot the marker genes
         marker_genes = kw.get("marker_genes", self.adata.uns["parameters"]['umap_marker_gene_list'])
-        # check if the marker_genes are in the adata.var_names
-        if not all(gene in self.adata.var_names for gene in marker_genes):
-            missing_genes = [gene for gene in marker_genes if gene not in self.adata.var_names]
-            logger.warning(f"Marker genes {missing_genes} are not in the adata.var_names")
+        # check if the marker_genes are in the adata.raw.var_names
+        vars_to_check = self.adata.raw.var_names if self.adata.raw is not None else self.adata.var_names
+        if not all(gene in vars_to_check for gene in marker_genes):
+            missing_genes = [gene for gene in marker_genes if gene not in vars_to_check]
+            logger.warning(f"Marker genes {missing_genes} are not in the adata.raw.var_names or adata.var_names")
             # remove the missing genes from the marker_genes list
-            marker_genes = [gene for gene in marker_genes if gene in self.adata.var_names]
+            marker_genes = [gene for gene in marker_genes if gene in vars_to_check]
             logger.info(f"Using marker genes {marker_genes} for plotting")
         if self.leiden_clusters_renamed:
             additonal_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  

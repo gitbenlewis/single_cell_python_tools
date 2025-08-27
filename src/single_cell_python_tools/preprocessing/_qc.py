@@ -32,7 +32,7 @@ def annotate_QC_genes(adata,organism = 'human' ,**parameters):
         adata.var['malat1'] = adata.var_names.str.contains(("Malat1"))  # MALAT1 genes as 'malat1'
     return 
 
-def calculate_qc_metrics(adata):
+def calculate_qc_metrics(adata,**parameters):
     """ 
     calculate_qc_metrics
     # add code to check if genes already annotated 

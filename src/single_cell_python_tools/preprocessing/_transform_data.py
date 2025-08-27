@@ -22,7 +22,12 @@ def process2scaledPCA(adata,
     logger.info(f"process2scaledPCA()-Step 1) library-size correct and Logarithmize (optional) the data ")
     logger.info(f"{normalize_total_target_sum} : normalize_total_target_sum ")
     logger.info(f"{logarithmize} : Logarithmize (optional) the data ")
-    adata=norm_log(adata,normalize_total_target_sum,logarithmize, **parameters)
+    #adata=norm_log(adata,normalize_total_target_sum,logarithmize, **parameters)
+    adata = norm_log(
+    adata,
+    normalize_total_target_sum=normalize_total_target_sum,
+    logarithmize=logarithmize,
+    **parameters)
     #################################  HVG selection
     logger.info(f"Select and annotate highly-variable genes (HVGs) ")
     logger.info(f"HVG selection flavor : HVG_flavor= {HVG_flavor} ")
@@ -74,10 +79,13 @@ def PCA_func(adata, **parameters):
     return 
 
 
-def norm_log(adata,normalize_total_target_sum=1e4, save_counts_layer=True, logarithmize=True,use_lognorm_for_raw=False, **parameters):
+def norm_log(adata,
+             normalize_total_target_sum=1e4,
+             save_counts_layer=True,
+              logarithmize=True,
+              use_lognorm_for_raw=False,
+                **parameters):
     '''
-
-
     '''
     logger.info(f'sctl.pp.norm_log() ')
     logger.info(f'norm_log()-Step 1) preserve counts (optional) : {save_counts_layer} ')

@@ -100,6 +100,8 @@ def rename_leiden_clusters(
         if mapped.isna().any():
             categories = new_cluster_names + ['Unknown']
             mapped = mapped.fillna('Unknown')
+            if reorder_cluster_names and new_cluster_names_order is not None:
+                new_cluster_names_order.append('Unknown')
         else:
             categories = new_cluster_names
         # make unique list of categories keep the order of first to appear in categories

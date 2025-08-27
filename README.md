@@ -26,35 +26,134 @@ check out the example notebook folders
 ## /01_PBMC3k: QC,preprocess,clustering, visuallzation, DEG , GSEA
 ###  00_sctl_functions_preprocessing_PBMC3K.ipynb 
    #### functions operate a separate adata object
-          - sctl.function(adata,**adata.uns["parameters"] 
-          Ex:
-          #  data download handled elsewhere
-          adata = sc.read_10x_mtx(data_directory_path)
-          adata.uns["parameters"]=pbmc3k_parameters
-          sctl.pp.basic_filitering(adata,**adata.uns["parameters"])
-          sctl.pp.annotate_n_view_adata_raw_counts(adata,**adata.uns["parameters"])
-          sctl.pp.filter_cells_by_anotated_QC_gene(adata,**adata.uns["parameters"])
-          sctl.pp.remove_genes(adata,**adata.uns["parameters"])
-          sctl.pp.process2scaledPCA(adata,**adata.uns["parameters"])
-          sctl.pp.leiden_clustering(adata,**adata.uns["parameters"])
-          sctl.pp.silhouette_score_n_plot(adata,**adata.uns["parameters"])
-          import scanpy as sc
-          sc.pl.umap(adata, color=adata.uns["parameters"]['umap_marker_gene_list'])
+      - sctl.function(adata,**adata.uns["parameters"]) 
+      Ex:
+      #  data download handled elsewhere
+      adata = sc.read_10x_mtx(data_directory_path)
+      adata.uns["parameters"]=pbmc3k_parameters
+      sctl.pp.basic_filitering(adata,**adata.uns["parameters"])
+      sctl.pp.annotate_n_view_adata_raw_counts(adata,**adata.uns["parameters"])
+      sctl.pp.filter_cells_by_anotated_QC_gene(adata,**adata.uns["parameters"])
+      sctl.pp.remove_genes(adata,**adata.uns["parameters"])
+      sctl.pp.process2scaledPCA(adata,**adata.uns["parameters"])
+      sctl.pp.leiden_clustering(adata,**adata.uns["parameters"])
+      sctl.pp.silhouette_score_n_plot(adata,**adata.uns["parameters"])
+      import scanpy as sc
+      sc.pl.umap(adata, color=adata.uns["parameters"]['umap_marker_gene_list'])
 
 ### 01_sctl_DATASET_class_preprocessing_PBMC3K.ipynb
 #### class object for each dataset, methods for analysis 
-         - sctl_DATASET_class().basic_filitering().clustering().etc()
-         Ex:
-         pbmc3k_sctl_DATASET=sctl_DATASET_class(parameters=pbmc3k_parameters)
-         sctl_DATASET_class.download_data().unpack_tar().load_data()
-         pbmc3k_sctl_DATASET.basic_filitering()
-         pbmc3k_sctl_DATASET.annotate_n_view_adata_raw_counts()
-         pbmc3k_sctl_DATASET.filter_cells_by_anotated_QC_gene()
-         pbmc3k_sctl_DATASET.remove_genes()
-         pbmc3k_sctl_DATASET.process2scaledPCA()
-         pbmc3k_sctl_DATASET.leiden_clustering()
-         pbmc3k_sctl_DATASET.silhouette_score_n_plot()
-         pbmc3k_sctl_DATASET.marker_gene_umaps()
+      - sctl_DATASET_class().basic_filitering().clustering().etc()
+      Full pipeline Ex:
+      pbmc3k_sctl_DATASET=sctl.DATASET_class(parameters=pbmc3k_parameters)
+      (
+      pbmc3k_sctl_DATASET
+      # datadown load
+      .download_data()
+      .unpack_tar()
+      .load_data()
+      # QC data
+      .basic_filitering()
+      .annotate_n_view_adata_raw_counts()
+      .filter_cells_by_anotated_QC_gene()
+      .remove_genes()
+      .annotate_n_view_adata_raw_counts()
+      ### transform and normalize
+      .process2scaledPCA()
+      ### clustering
+      .leiden_clustering()
+      .rename_leiden_clusters()
+      .silhouette_score_n_plot()
+      ### UMAP plots
+      .marker_gene_umaps()
+      )
+### Example parameters dictionary
+      # can store dictionary in adata.uns
+      bmc3k_parameters={
+      # meta
+      "download_url":'http://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz',
+      "download_output_dir":'./data/',
+      "download_output_filename": None,
+      "input_file_path":'./data/filtered_gene_bc_matrices/hg19',
+      'file_format':'10x',
+      'dataset_prefix_for_10x_triplets':'',# include all characters up to barcodes/features (underscore)
+      "output_prefix":'EX_pbmc3k_raw_sctl_DATASET_',
+      "output_dir":'./write/',
+      'make_empty_output_dirs': False,  # make empty output dirs if True or if output_dir is not none
+      "n_jobs": 1,
+      'organism' : 'human',
+
+      #### dataset specfic parameters
+      ###Basic filters
+      "filter_genes_min_cells":3,  # min of cells a gene is detected in else gene is tossed out default 3
+      "filter_genes_min_counts":0, # min  of counts a gene must have to pass basic filter default 0
+      "filter_cells_min_genes":200, # min  of genes detected or else cell/observation is tossed out default 200
+      "filter_cells_min_counts":0, # min  of counts detected or else cell/observation is tossed out default 0  
+         
+      ####Filter  on off switches
+      "filter_ncount" : True,
+      "filter_pct_mt" : True,
+      "filter_pct_ribo" : False,
+      "filter_pct_hb" : False,
+      "filter_pct_malat1":False,
+      "filter_HVG" : True,
+
+      ###less than filter percent 
+      "n_genes_bycounts" : 2500, #less than filter
+      "percent_mt" : 5, #less than filter
+      "percent_ribo" : 100, #less than filter
+      "percent_malat1": 100, #less than filter
+      "percent_hb" : 100,  #less than filter
+
+      ###Greater than filter percent
+      "over_n_genes_bycounts" : 200, #greater than filter
+      "over_percent_mt" : 0, #greater than filter
+      "over_percent_ribo" : 0, #greater than filter
+      "over_percent_malat1": 0, #greater than filter
+      "over_percent_hb" : 0 , #greater than filter
+
+      ###Remove gene sets  on off switches
+      "remove_MALAT1" : False, 
+      "remove_MT" : False ,
+      "remove_HB" : False,
+      "remove_RP_SL" : False ,
+      "remove_MRP_SL" : False,
+
+      #### processing parameters and options
+      "filter_genes_min_counts_normed":0,
+      "normalize_total_target_sum" : 1e4,  # scanpy  default 1e4
+      "HVG_min_mean"  :  0.0125, # scanpy  default 0.0125
+      "HVG_max_mean"  :  3, # scanpy  default 3
+      "HVG_min_disp"  :  0.5, # scanpy  default 0.5
+      "logarithmize":True, # scanpy default True
+      "scale":True, # scanpy default True
+      "scale_max_std_value":10, # 10 often used
+      "save_counts_layer": True,
+
+      ####regression on off switches
+      "regress_mt" : True,
+      "regress_ribo" : False,
+      "regress_malat1":False,
+      "regress_hb" : False,
+      "regress_cell_cycle_score" : False,
+
+      ###clustering parameters for clusters
+      "number_of_PC" : 40, ### dataset demensionality 
+      "number_of_neighbors" : 10,
+      "leiden_res" : .9, #leiden clustering resolution
+
+
+      # UMAP graph parameters
+      'umap_marker_gene':True,
+      'umap_marker_gene_list': ['IL7R','CD14','LYZ', 'MS4A1','CD8A','GNLY','NKG7','FCGR3A','MS4A7','FCER1A','CST3','PPBP'],
+      'ncols': 4,
+      'vmax':None,
+      #cluster naming parameters
+      'rename_cluster': True,
+      ####  'NK' and 'FCGR3A Monocytes' seem to switch places sometimes .. not sure if its random or a bug, NK cluster should be close to CD8 T cells
+      #'new_cluster_names' : [  'CD4 T', 'CD14 Monocytes', 'B','CD8 T',   'FCGR3A Monocytes','NK','Dendritic', 'Megakaryocytes'],
+      'new_cluster_names' : [  'CD4 T', 'CD14 Monocytes', 'B','CD8 T',   'NK','FCGR3A Monocytes','Dendritic', 'Megakaryocytes'],  
+      }
 
 
 # Getting started

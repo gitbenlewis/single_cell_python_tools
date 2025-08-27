@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import silhouette_samples
+import anndata
+from typing import Any, Dict, Optional, List
 
 # set up logging within the module (not the root logger)
 import logging
@@ -19,7 +21,11 @@ sc.settings.set_figure_params(dpi=80, facecolor='white')
 
 
 
-def silhouette_score_n_plot(adata,leiden_res='unk',**parameters):
+def silhouette_score_n_plot(
+    adata: anndata.AnnData | None = None,
+    leiden_res: str | float | None = 'unk',
+    **parameters: Any
+):
     '''
     adsctl.pl.silhouette_score_n_plot(adata,parameters,leiden_res='unk'):
     > assumes ledien clusteirng to subset cells
@@ -66,7 +72,11 @@ def silhouette_score_n_plot(adata,leiden_res='unk',**parameters):
     #return adata
     return 
 
-def silhouette_score_of_obs_key_n_plot(adata,obs_key='leiden',**parameters):
+def silhouette_score_of_obs_key_n_plot(
+    adata: anndata.AnnData | None = None,
+    obs_key: str | None = 'leiden',
+    **parameters: Any
+):
     '''
     adsctl.pl.silhouette_score_n_plot(adata,obs_key='leiden',**parameters):
     > assumes ledien clusteirng to subset cells
@@ -117,7 +127,16 @@ def silhouette_score_of_obs_key_n_plot(adata,obs_key='leiden',**parameters):
 
 ####################################################################################################################
 
-def plot_batch_obs_key_of_obs_key2_old(adata,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4),flavor="pct_count"):
+def plot_batch_obs_key_of_obs_key2_old(
+    adata: anndata.AnnData | None = None,
+    batch_obs_key: str = 'batch',
+    obs_key2: str = "leiden",
+    flavor: str = "pct_count",
+    figsize: tuple[int, int] = (10, 4),
+    savefig: bool = False,
+    output_dir: str = './project/',
+    output_prefix: str = "dataset_"
+):
     '''
     df, df_norm=adsctl.pl.plot_batch_obs_key_of_obs_key2(adata,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4),flavor="pct_count")
     makes two side by side bar charts, each bar is a batch_obs_key='batch category and each bar is stacked and colored by obs_key2="leiden"
@@ -181,7 +200,17 @@ def plot_batch_obs_key_of_obs_key2_old(adata,savefig=False,output_dir='./project
 
 ####################################################################################################################
 
-def plot_batch_obs_key_of_obs_key2(adata,savetable=False,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4),flavor="pct_count"):
+def plot_batch_obs_key_of_obs_key2(
+    adata: anndata.AnnData | None = None,
+    batch_obs_key: str = 'batch',
+    obs_key2: str = "leiden",
+    flavor: str = "pct_count",
+    figsize: tuple = (10, 4),
+    savetable: bool = False,
+    savefig: bool = False,
+    output_dir: str = './project/',
+    output_prefix: str = "dataset_"
+):
     '''
     df, df_norm=adsctl.pl.plot_batch_obs_key_of_obs_key2(adata,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4),flavor="pct_count")
     makes two side by side bar charts, each bar is a batch_obs_key='batch category and each bar is stacked and colored by obs_key2="leiden"
@@ -270,7 +299,15 @@ def plot_batch_obs_key_of_obs_key2(adata,savetable=False,savefig=False,output_di
 
 ####################################################################################################################
 
-def plot_percent_obs_key2_per_batch_obs_key(adata,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4)):
+def plot_percent_obs_key2_per_batch_obs_key(
+    adata: anndata.AnnData | None = None,
+    batch_obs_key='batch',
+    obs_key2="leiden",
+    figsize=(10,4),
+    savefig=False,
+    output_dir='./project/',
+    output_prefix="dataset_",
+):
     '''
      df_norm=adsctl.pl.plot_percent_obs_key2_per_batch_obs_key(adata,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4)
      This produce one column of individual bar charts (one chart for each catagory in batch_obs_key='batch'") # batch_obs_key="sample_ID is good to use

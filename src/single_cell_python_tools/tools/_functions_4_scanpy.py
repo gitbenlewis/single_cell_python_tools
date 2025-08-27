@@ -3,6 +3,8 @@ import anndata
 import pandas as pd
 import scanpy as sc
 import numpy as np
+import anndata
+from typing import Any, Dict, Optional, List
 
 # set up logging within the module (not the root logger)
 import logging
@@ -23,9 +25,14 @@ def print_size_in_MB(obj):
     print(message)
     return size_MB
 
-def df_loadings_ordered_byPC(adata,ascending=False,
-save_table=False,output_dir="./adata_output/",output_prefix="adata_",#**parameters
-                            ):
+def df_loadings_ordered_byPC(
+    adata: anndata.AnnData | None = None,
+    ascending: bool = False,
+    save_table: bool = False,
+    output_dir: str = "./adata_output/",
+    output_prefix: str = "adata_",
+    #**parameters: Any
+):
     """
     ######################## idea from https://github.com/scverse/scanpy/issues/836
     """
@@ -52,11 +59,15 @@ save_table=False,output_dir="./adata_output/",output_prefix="adata_",#**paramete
 
 
 
-def cef_to_adata(data_dir,data_prefix,n_obs=0,n_skiprows=2,cef_delimiter_tab=True,save_to_h5ad=True):
+def cef_to_adata(
+    data_dir: str,
+    data_prefix: str,
+    n_obs: int=0,
+    n_skiprows: int=2,
+    cef_delimiter_tab: bool=True,
+    save_to_h5ad: bool=True):
     """
-    this 
-    cef_to_adata_float()
-    is for count files with float values
+    
     """
     import anndata
     import pandas as pd
@@ -102,7 +113,11 @@ def cef_to_adata(data_dir,data_prefix,n_obs=0,n_skiprows=2,cef_delimiter_tab=Tru
 
 
 ####################################### add better doc string here  and make example in note book
-def annotate_marker_genes(adata,gene_names,min_n_counts=None,obs_key='marker_genes'):
+def annotate_marker_genes(
+    adata: anndata.AnnData | None = None,
+    gene_names: list[str] | None = None,
+    min_n_counts: list[int] | None = None,
+    obs_key: str = 'marker_genes'):
     '''
     annotate cells with marker genes
     adata: anndata object
@@ -139,9 +154,19 @@ def annotate_marker_genes(adata,gene_names,min_n_counts=None,obs_key='marker_gen
 
 
 
-def rank_genes(adata,output_dir="./adata_output/",output_prefix="adata_",save_output=True,
-               wilcox=True,logreg=True,t_test=True,rank_use_raw=True,obs_key="leiden",n_jobs=1,**parameters
-                 ):
+def rank_genes(
+    adata: anndata.AnnData | None = None,
+    output_dir: str = "./adata_output/",
+    output_prefix: str = "adata_",
+    save_output: bool = True,
+    wilcox: bool = True,
+    logreg: bool = True,
+    t_test: bool = True,
+    rank_use_raw: bool = True,
+    obs_key: str = "leiden",
+    n_jobs: int = 1,
+    **parameters
+):
     """
     rank_genes(
     adata,
@@ -216,10 +241,21 @@ def rank_genes(adata,output_dir="./adata_output/",output_prefix="adata_",save_ou
          ######################### t-test
     return rank_genes_groups_wilcox, rank_genes_groups_logreg,rank_genes_groups_t_test
             
-def rank_genes_obscat1_vs_obscat2(adata,output_dir="./adata_output/",output_prefix="adata_",save_output=True,wilcox=True,logreg=True,t_test=True,rank_use_raw=True,n_jobs=1,
-                                  obs_key="leiden",obscat1='0',obscat2='1',
-                                    **parameters
-                                    ):
+def rank_genes_obscat1_vs_obscat2(
+    adata: anndata.AnnData | None = None,
+    output_dir: str = "./adata_output/",
+    output_prefix: str = "adata_",
+    save_output: bool = True,
+    wilcox: bool = True,
+    logreg: bool = True,
+    t_test: bool = True,
+    rank_use_raw: bool = True,
+    n_jobs: int = 1,
+    obs_key: str = "leiden",
+    obscat1: str = '0',
+    obscat2: str = '1',
+    **parameters
+):
     """
     rank_genes_obscat1_vs_obscat2(
     adata,
@@ -304,7 +340,13 @@ def rank_genes_obscat1_vs_obscat2(adata,output_dir="./adata_output/",output_pref
 
 
 # write function for differential gene expression analysis between two groups defined by a categorical variable in adata.obs but dont use the sc.tl.rank_genes_groups function use the t-test function from scipy.stats and the statsmodels.stats.multitest.multipletests function to correct for multiple testing return a dataframe with the gene names, t-test p-value, t-test log fold change, and corrected p-value for each gene. have the function to use a specfic adata layer instead of the adata.X matrix
-def diff_exp(adata, groupby, group1, group2, layer=None):
+def diff_exp(
+    adata: anndata.AnnData | None = None,
+    groupby: str,
+    group1: str,
+    group2: str,
+    layer: str | None = None
+):
     """
     Parameters
     ----------
@@ -359,15 +401,19 @@ def diff_exp(adata, groupby, group1, group2, layer=None):
 
 
 
-def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_",
-                              test_library_names=['GO_Biological_Process_2021','GO_Cellular_Component_2021','GO_Molecular_Function_2021'], top_nth=10,n_jobs=1,
-                                **parameters
-                                ):
+def GSEA_enrichr_all_clusters(
+    output_dir: str = "./adata_output/",
+    output_prefix: str = "adata_",
+    test_library_names: list[str] = ['GO_Biological_Process_2021','GO_Cellular_Component_2021','GO_Molecular_Function_2021'],
+    top_nth: int = 10,
+    n_jobs: int = 1,
+    **parameters
+):
     """This is the doc string
     This functions take the tables produced by the MD_rank_genes(adata,output_dir,output_prefix) function and perfroms GSEA analysis using the gseapy enrichr package 
     
     default arguements:
-    MD_GSEA_enrichr_all_clusters(
+    GSEA_enrichr_all_clusters(
     output_dir="./figures/", # set this to same output_dir used for MD_rank_genes(adata,output_dir,output_prefix)
     output_prefix="adata", # set this to same output_prefix directory used for MD_rank_genes(adata,output_dir,output_prefix)
     test_library_names=['GO_Biological_Process_2021','GO_Cellular_Component_2021','GO_Molecular_Function_2021'], # pick from list below
@@ -375,202 +421,6 @@ def GSEA_enrichr_all_clusters(output_dir="./adata_output/",output_prefix="adata_
     ##top_nth=10 (default) means the foregourd list is the top 10% of the background list
     )
     
-    
-    List of avalible gene sets to look for enrichement. These can go into  test_library_names=[] list .
-      ['ARCHS4_Cell-lines',
-     'ARCHS4_IDG_Coexp',
-     'ARCHS4_Kinases_Coexp',
-     'ARCHS4_TFs_Coexp',
-     'ARCHS4_Tissues',
-     'Achilles_fitness_decrease',
-     'Achilles_fitness_increase',
-     'Aging_Perturbations_from_GEO_down',
-     'Aging_Perturbations_from_GEO_up',
-     'Allen_Brain_Atlas_10x_scRNA_2021',
-     'Allen_Brain_Atlas_down',
-     'Allen_Brain_Atlas_up',
-     'Azimuth_Cell_Types_2021',
-     'BioCarta_2013',
-     'BioCarta_2015',
-     'BioCarta_2016',
-     'BioPlanet_2019',
-     'BioPlex_2017',
-     'CCLE_Proteomics_2020',
-     'CORUM',
-     'COVID-19_Related_Gene_Sets',
-     'COVID-19_Related_Gene_Sets_2021',
-     'Cancer_Cell_Line_Encyclopedia',
-     'CellMarker_Augmented_2021',
-     'ChEA_2013',
-     'ChEA_2015',
-     'ChEA_2016',
-     'Chromosome_Location',
-     'Chromosome_Location_hg19',
-     'ClinVar_2019',
-     'DSigDB',
-     'Data_Acquisition_Method_Most_Popular_Genes',
-     'DepMap_WG_CRISPR_Screens_Broad_CellLines_2019',
-     'DepMap_WG_CRISPR_Screens_Sanger_CellLines_2019',
-     'Descartes_Cell_Types_and_Tissue_2021',
-     'DisGeNET',
-     'Disease_Perturbations_from_GEO_down',
-     'Disease_Perturbations_from_GEO_up',
-     'Disease_Signatures_from_GEO_down_2014',
-     'Disease_Signatures_from_GEO_up_2014',
-     'DrugMatrix',
-     'Drug_Perturbations_from_GEO_2014',
-     'Drug_Perturbations_from_GEO_down',
-     'Drug_Perturbations_from_GEO_up',
-     'ENCODE_Histone_Modifications_2013',
-     'ENCODE_Histone_Modifications_2015',
-     'ENCODE_TF_ChIP-seq_2014',
-     'ENCODE_TF_ChIP-seq_2015',
-     'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-     'ESCAPE',
-     'Elsevier_Pathway_Collection',
-     'Enrichr_Libraries_Most_Popular_Genes',
-     'Enrichr_Submissions_TF-Gene_Coocurrence',
-     'Enrichr_Users_Contributed_Lists_2020',
-     'Epigenomics_Roadmap_HM_ChIP-seq',
-     'FANTOM6_lncRNA_KD_DEGs',
-     'GO_Biological_Process_2013',
-     'GO_Biological_Process_2015',
-     'GO_Biological_Process_2017',
-     'GO_Biological_Process_2017b',
-     'GO_Biological_Process_2018',
-     'GO_Biological_Process_2021',
-     'GO_Cellular_Component_2013',
-     'GO_Cellular_Component_2015',
-     'GO_Cellular_Component_2017',
-     'GO_Cellular_Component_2017b',
-     'GO_Cellular_Component_2018',
-     'GO_Cellular_Component_2021',
-     'GO_Molecular_Function_2013',
-     'GO_Molecular_Function_2015',
-     'GO_Molecular_Function_2017',
-     'GO_Molecular_Function_2017b',
-     'GO_Molecular_Function_2018',
-     'GO_Molecular_Function_2021',
-     'GTEx_Aging_Signatures_2021',
-     'GTEx_Tissue_Expression_Down',
-     'GTEx_Tissue_Expression_Up',
-     'GWAS_Catalog_2019',
-     'GeneSigDB',
-     'Gene_Perturbations_from_GEO_down',
-     'Gene_Perturbations_from_GEO_up',
-     'Genes_Associated_with_NIH_Grants',
-     'Genome_Browser_PWMs',
-     'HDSigDB_Human_2021',
-     'HDSigDB_Mouse_2021',
-     'HMDB_Metabolites',
-     'HMS_LINCS_KinomeScan',
-     'HomoloGene',
-     'HuBMAP_ASCT_plus_B_augmented_w_RNAseq_Coexpression',
-     'HuBMAP_ASCTplusB_augmented_2022',
-     'HumanCyc_2015',
-     'HumanCyc_2016',
-     'Human_Gene_Atlas',
-     'Human_Phenotype_Ontology',
-     'InterPro_Domains_2019',
-     'Jensen_COMPARTMENTS',
-     'Jensen_DISEASES',
-     'Jensen_TISSUES',
-     'KEA_2013',
-     'KEA_2015',
-     'KEGG_2013',
-     'KEGG_2015',
-     'KEGG_2016',
-     'KEGG_2019_Human',
-     'KEGG_2019_Mouse',
-     'KEGG_2021_Human',
-     'Kinase_Perturbations_from_GEO_down',
-     'Kinase_Perturbations_from_GEO_up',
-     'L1000_Kinase_and_GPCR_Perturbations_down',
-     'L1000_Kinase_and_GPCR_Perturbations_up',
-     'LINCS_L1000_Chem_Pert_down',
-     'LINCS_L1000_Chem_Pert_up',
-     'LINCS_L1000_Ligand_Perturbations_down',
-     'LINCS_L1000_Ligand_Perturbations_up',
-     'Ligand_Perturbations_from_GEO_down',
-     'Ligand_Perturbations_from_GEO_up',
-     'MCF7_Perturbations_from_GEO_down',
-     'MCF7_Perturbations_from_GEO_up',
-     'MGI_Mammalian_Phenotype_2013',
-     'MGI_Mammalian_Phenotype_2017',
-     'MGI_Mammalian_Phenotype_Level_3',
-     'MGI_Mammalian_Phenotype_Level_4',
-     'MGI_Mammalian_Phenotype_Level_4_2019',
-     'MGI_Mammalian_Phenotype_Level_4_2021',
-     'MSigDB_Computational',
-     'MSigDB_Hallmark_2020',
-     'MSigDB_Oncogenic_Signatures',
-     'Microbe_Perturbations_from_GEO_down',
-     'Microbe_Perturbations_from_GEO_up',
-     'Mouse_Gene_Atlas',
-     'NCI-60_Cancer_Cell_Lines',
-     'NCI-Nature_2015',
-     'NCI-Nature_2016',
-     'NIH_Funded_PIs_2017_AutoRIF_ARCHS4_Predictions',
-     'NIH_Funded_PIs_2017_GeneRIF_ARCHS4_Predictions',
-     'NIH_Funded_PIs_2017_Human_AutoRIF',
-     'NIH_Funded_PIs_2017_Human_GeneRIF',
-     'NURSA_Human_Endogenous_Complexome',
-     'OMIM_Disease',
-     'OMIM_Expanded',
-     'Old_CMAP_down',
-     'Old_CMAP_up',
-     'Orphanet_Augmented_2021',
-     'PPI_Hub_Proteins',
-     'PanglaoDB_Augmented_2021',
-     'Panther_2015',
-     'Panther_2016',
-     'Pfam_Domains_2019',
-     'Pfam_InterPro_Domains',
-     'PheWeb_2019',
-     'PhenGenI_Association_2021',
-     'Phosphatase_Substrates_from_DEPOD',
-     'ProteomicsDB_2020',
-     'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO',
-     'RNAseq_Automatic_GEO_Signatures_Human_Down',
-     'RNAseq_Automatic_GEO_Signatures_Human_Up',
-     'RNAseq_Automatic_GEO_Signatures_Mouse_Down',
-     'RNAseq_Automatic_GEO_Signatures_Mouse_Up',
-     'Rare_Diseases_AutoRIF_ARCHS4_Predictions',
-     'Rare_Diseases_AutoRIF_Gene_Lists',
-     'Rare_Diseases_GeneRIF_ARCHS4_Predictions',
-     'Rare_Diseases_GeneRIF_Gene_Lists',
-     'Reactome_2013',
-     'Reactome_2015',
-     'Reactome_2016',
-     'SILAC_Phosphoproteomics',
-     'SubCell_BarCode',
-     'SysMyo_Muscle_Gene_Sets',
-     'TF-LOF_Expression_from_GEO',
-     'TF_Perturbations_Followed_by_Expression',
-     'TG_GATES_2020',
-     'TRANSFAC_and_JASPAR_PWMs',
-     'TRRUST_Transcription_Factors_2019',
-     'Table_Mining_of_CRISPR_Studies',
-     'TargetScan_microRNA',
-     'TargetScan_microRNA_2017',
-     'Tissue_Protein_Expression_from_Human_Proteome_Map',
-     'Tissue_Protein_Expression_from_ProteomicsDB',
-     'Transcription_Factor_PPIs',
-     'UK_Biobank_GWAS_v1',
-     'Virus-Host_PPI_P-HIPSTer_2020',
-     'VirusMINT',
-     'Virus_Perturbations_from_GEO_down',
-     'Virus_Perturbations_from_GEO_up',
-     'WikiPathway_2021_Human',
-     'WikiPathways_2013',
-     'WikiPathways_2015',
-     'WikiPathways_2016',
-     'WikiPathways_2019_Human',
-     'WikiPathways_2019_Mouse',
-     'dbGaP',
-     'huMAP',
-     'lncHUB_lncRNA_Co-Expression',
-     'miRTarBase_2017']
     """
     import scanpy as sc
     import pandas as pd
@@ -826,10 +676,16 @@ def filter_obs(data: Union[AnnData,], var: Union[str, Sequence[str]], func: Opti
     return
 
 import numpy as np
-def label_cells_by_single_gene_expression(adata, gene_name1, min_n_counts1, use_raw=True, use_percentile=False,):
+def label_cells_by_single_gene_expression(
+    adata: anndata.AnnData | None = None,
+    gene_name1: str | None = 'LARP4',
+    min_n_counts1: int | None = 1,
+    use_raw: bool = True,
+    use_percentile: bool = False,
+):
     import numpy as np
     if use_percentile:
-        percentile1=min_n_counts1
+        percentile1 = min_n_counts1
         if use_raw:
             min_n_counts1=np.percentile(adata[:, [gene_name1]].X.toarray()[:,0][adata[:, [gene_name1]].X.toarray()[:,0]>0], percentile1)
         else:
@@ -861,7 +717,15 @@ def label_cells_by_single_gene_expression(adata, gene_name1, min_n_counts1, use_
     return adata
 
 
-def label_cells_by_double_gene_expression(adata, gene_name1, gene_name2,min_n_counts1,min_n_counts2, use_raw=True, use_percentile=False,):
+def label_cells_by_double_gene_expression(
+    adata: anndata.AnnData | None = None,
+    gene_name1: str | None = 'LARP4',
+    gene_name2: str | None = 'MALAT1',
+    min_n_counts1: int | None = 1,
+    min_n_counts2: int | None = 1,
+    use_raw: bool = True,
+    use_percentile: bool = False,
+):
     '''
     annotate cells with marker genes
     adata: anndata objects
@@ -932,7 +796,15 @@ def label_cells_by_double_gene_expression(adata, gene_name1, gene_name2,min_n_co
     return adata
 
 
-def average_feature_expression(adata, groupby_key, layer=None, use_raw=False, log1p=False, zscore=False, subtract_mean=True):
+def average_feature_expression(
+    adata: anndata.AnnData | None = None,
+    groupby_key: str | None = 'batch',
+    layer: str | None = None,
+    use_raw: bool = False,
+    log1p: bool = False,
+    zscore: bool = False,
+    subtract_mean: bool = True
+):
     """
     Calculate the average feature expression for observations sharing the same metadata.
 
@@ -1039,15 +911,17 @@ plt.tight_layout()
 plt.show()
 '''
 
-def average_obs_feature_per_group(adata, groupby_key, obs_keys):
+def average_obs_feature_per_group(
+    adata: anndata.AnnData | None = None,
+    groupby_key: str | None = None,
+    obs_keys: list[str] | None = None
+):
     """
     Calculate the average expression of specified features per group.
-    
     Parameters:
     - adata: AnnData object
     - groupby_key: Key in adata.obs to group by
     - obs_keys: List of feature names to average
-    
     Returns:
     - DataFrame with average expression per group
     """
@@ -1086,7 +960,7 @@ plt.show()
 
 
 def make_df_obs_adataX(
-    adata,
+    adata: anndata.AnnData | None = None,
     layer: str | None = None,
     index: str | None = None,
     varcolumns: list[str] | str | None = None,

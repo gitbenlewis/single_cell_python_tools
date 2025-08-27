@@ -1,19 +1,34 @@
 ## module imports
 import scanpy as sc
+import anndata
+from typing import Any, Dict, Optional, List, Union
 
 # set up logging within the module (not the root logger)
 import logging
 __name__leaf = __name__.split('.')[-1]
 logger = logging.getLogger("sctl.pp." + __name__leaf)
 
-def process2scaledPCA(adata,
-                   normalize_total_target_sum=1e4,logarithmize=True,
-                   filter_HVG=False,HVG_min_mean=0.0125, HVG_max_mean=3, HVG_min_disp=3,
-                   regress_mt=False,regress_ribo=False,regress_malat1=False,regress_hb=False,
-                   scale=True,scale_max_std_value=None,PCA=True,
-                      cell_cycle_score=True,
-                   regress_cell_cycle_score=False,HVG_flavor='seurat',HVG_n_top_genes=1500,organism='human',
-                      **parameters):
+def process2scaledPCA(
+    adata: anndata.AnnData | None = None,
+    normalize_total_target_sum: int = 1e4,
+    logarithmize: bool = True,
+    filter_HVG: bool = False,
+    HVG_min_mean: float = 0.0125,
+    HVG_max_mean: float = 3,
+    HVG_min_disp: float = 3,
+    regress_mt: bool = False,
+    regress_ribo: bool = False,
+    regress_malat1: bool = False,
+    regress_hb: bool = False,
+    scale: bool = True,
+    scale_max_std_value=None,
+    PCA: bool = True,
+    cell_cycle_score: bool = True,
+    regress_cell_cycle_score: bool = False,
+    HVG_flavor: str = 'seurat',
+    HVG_n_top_genes: int = 1500,
+    organism: str = 'human',
+    **parameters: Any):
     '''
     This function performs a series of preprocessing steps on the AnnData object, including normalization, log transformation, highly variable gene selection, regression of unwanted sources of variation, scaling, cell cycle scoring, and PCA.
     '''
@@ -79,12 +94,13 @@ def PCA_func(adata, **parameters):
     return 
 
 
-def norm_log(adata,
-             normalize_total_target_sum=1e4,
-             save_counts_layer=True,
-              logarithmize=True,
-              use_lognorm_for_raw=False,
-                **parameters):
+def norm_log(
+    adata: anndata.AnnData | None = None,
+    normalize_total_target_sum: float = 1e4,
+    save_counts_layer: bool = True,
+    logarithmize: bool = True,
+    use_lognorm_for_raw: bool = False,
+    **parameters: Any):
     '''
     '''
     logger.info(f'sctl.pp.norm_log() ')
@@ -121,11 +137,21 @@ def norm_log(adata,
 
 
         
-def HVG_selection_log_norm_seurat(adata,filter_HVG=False,HVG_min_mean=0.0125, HVG_max_mean=3, HVG_min_disp=3, **parameters):
+def HVG_selection_log_norm_seurat(
+    adata: anndata.AnnData | None = None,
+    filter_HVG: bool = False,
+    HVG_min_mean: float = 0.0125,
+    HVG_max_mean: float = 3,
+    HVG_min_disp: float = 3,
+    **parameters: Any):
     '''
     Select highly variable genes
     '''
-    sc.pp.highly_variable_genes(adata, min_mean=HVG_min_mean, max_mean=HVG_max_mean, min_disp=HVG_min_disp)
+    sc.pp.highly_variable_genes(
+    adata,
+    min_mean=HVG_min_mean,
+    max_mean=HVG_max_mean,
+    min_disp=HVG_min_disp)
     n_HVGs = sum(adata.var.highly_variable)
     logger.info(f'{n_HVGs} : number of highly varriable genes ')
     sc.pl.highly_variable_genes(adata) #### plot HVGs
@@ -135,7 +161,12 @@ def HVG_selection_log_norm_seurat(adata,filter_HVG=False,HVG_min_mean=0.0125, HV
         logger.info(f' filter_HVG == {filter_HVG} ... all genes will be kept ')
     return adata
 
-def HVG_selection_log_norm_seurat_v3(adata,filter_HVG=False,HVG_n_top_genes=1500,**parameters):
+def HVG_selection_log_norm_seurat_v3(
+    adata: anndata.AnnData | None = None,
+    filter_HVG: bool = False,
+    HVG_n_top_genes: int = 1500,
+    **parameters: Any
+):
     '''
     Select highly variable genes
     '''
@@ -149,7 +180,11 @@ def HVG_selection_log_norm_seurat_v3(adata,filter_HVG=False,HVG_n_top_genes=1500
         logger.info(f' filter_HVG == {filter_HVG}  ... all genes will be kept ')
     return adata
 
-def HVG_removal(adata,filter_HVG=True,**parameters):
+def HVG_removal(
+    adata: anndata.AnnData | None = None,
+    filter_HVG: bool = True,
+    **parameters: Any
+):
     '''
     Remove lowly variable genes from the dataset.
     '''
@@ -165,7 +200,15 @@ def HVG_removal(adata,filter_HVG=True,**parameters):
     return adata
 
     
-def regress_out_anotated_QC_genes(adata,regress_mt=False,regress_ribo=False,regress_malat1=False,regress_hb=False,n_jobs=4, **parameters):
+def regress_out_anotated_QC_genes(
+    adata: anndata.AnnData | None = None,
+    regress_mt: bool = False,
+    regress_ribo: bool = False,
+    regress_malat1: bool = False,
+    regress_hb: bool = False,
+    n_jobs: int = 1,
+    **parameters: Any
+):
     '''
     Regress out annotated QC genes
     '''
@@ -198,11 +241,15 @@ def regress_out_anotated_QC_genes(adata,regress_mt=False,regress_ribo=False,regr
 
 
 
-def calc_cell_cycle_score(adata,organism='human'):
+def calc_cell_cycle_score(
+    adata: anndata.AnnData | None = None,
+    organism: str = 'human',
+    **parameters: Any
+):
     '''
-
+    calculate cell cycle score based on a s_genes and g2m_genes list
+    sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
     '''
-
     logger.info(f'############# WARNING data should be scaled first if planing on regressing out cell cycle score')
     if organism=='human': 
         logger.info('Organism is human, using  human cell cycle genes')
@@ -213,7 +260,7 @@ def calc_cell_cycle_score(adata,organism='human'):
         #  'CDC6', 'EXO1', 'TIPIN', 'DSCC1', 'BLM', 'CASP8AP2', 'USP1', 'CLSPN', 'POLA1', 'CHAF1B', 'BRIP1', 'E2F8']
         #g2m_genes=['HMGB2', 'CDK1', 'NUSAP1', 'UBE2C', 'BIRC5', 'TPX2', 'TOP2A', 'NDC80', 'CKS2', 'NUF2',
         #  'CKS1B', 'MKI67', 'TMPO', 'CENPF', 'TACC3', 'FAM64A', 'SMC4', 'CCNB2', 'CKAP2L', 'CKAP2',
-        #  'AURKB', 'BUB1',         'KIF11', 'ANP32E', 'TUBB4B', 'GTSE1', 'KIF20B', 'HJURP', 'CDCA3', 'HN1',
+        #  'AURKB', 'BUB1',    'KIF11', 'ANP32E', 'TUBB4B', 'GTSE1', 'KIF20B', 'HJURP', 'CDCA3', 'HN1',
         #  'CDC20', 'TTK', 'CDC25C', 'KIF2C', 'RANGAP1', 'NCAPD2', 'DLGAP5', 'CDCA2', 'CDCA8',
         #  'ECT2', 'KIF23', 'HMMR', 'AURKA', 'PSRC1', 'ANLN', 'LBR', 'CKAP5', 'CENPE', 'CTCF', 'NEK2', 'G2E3', 'GAS2L3', 'CBX5', 'CENPA']
         s_genes  = [
@@ -249,23 +296,24 @@ def calc_cell_cycle_score(adata,organism='human'):
             "Ect2","Kif23","Hmmr","Aurka","Psrc1","Anln","Lbr","Ckap5","Cenpe","Ctcf",
             "Nek2","G2e3","Gas2l3","Cbx5","Cenpa"
         ]
-
     cell_cycle_genes=g2m_genes+s_genes
     logger.info(f' there are {len(s_genes)} s_genes   {len(g2m_genes)} g2m_genes  {len(cell_cycle_genes)} cell_cycle_genes')
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
     logger.info(f' there are {len(cell_cycle_genes)} cell_cycle_genes in the dataset')    
-     ## do scoring 
+    ## do scoring 
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
-   # plot the cell cycle scores 
+    # plot the cell cycle scores 
     sc.pl.violin(adata, ['S_score', 'G2M_score'],jitter=0.4,rotation=45)
     return 
 
-def regress_cell_cycle_score_func(adata):
+def regress_cell_cycle_score_func(
+    adata: anndata.AnnData | None = None,
+    **parameters: Any
+):
     '''
     Regress out cell cycle scores from the data
     '''
     sc.pp.regress_out(adata, ['S_score', 'G2M_score'])
-    #return adata
     return
 
 

@@ -1,6 +1,8 @@
 ## module imports
 import scanpy as sc
 import pandas as pd
+import anndata
+from typing import Any, Dict, Optional, List
 
 # set up logging within the module (not the root logger)
 import logging
@@ -9,7 +11,14 @@ logger = logging.getLogger("sctl.pp." + __name__leaf)
 
 
 
-def leiden_clustering(adata, number_of_neighbors=10,number_of_PC=40, leiden_res=1,key_added='leiden', **parameters):
+def leiden_clustering(
+    adata: anndata.AnnData | None = None,
+    number_of_neighbors: int = 10,
+    number_of_PC: int = 40,
+    leiden_res: float = 1,
+    key_added: str = 'leiden',
+    **parameters: Any
+):
     '''
     #### code
     leiden_clustering(adata, number_of_neighbors=10,number_of_PC=40, leiden_res=1,key_added='leiden', **parameters)
@@ -24,27 +33,35 @@ def leiden_clustering(adata, number_of_neighbors=10,number_of_PC=40, leiden_res=
     return
 
 
-def rename_leiden_clusters_old(adata,rename_cluster=False,new_cluster_names=None,new_obs_key='Cell_Clusters', **parameters):
+def rename_leiden_clusters_old(
+    adata: anndata.AnnData | None = None,
+    rename_cluster: bool = False,
+    new_cluster_names: List[str] | None = None,
+    new_obs_key: str = 'Cell_Clusters',
+    **parameters: Any
+):
     '''
     rename_leiden_clusters_old(adata,parameters=None,rename_cluster=False,new_cluster_names=None,new_obs_key='Cell_Clusters'):
     '''
-
-    ##################### cluster remnameing 
     if rename_cluster==True:
         cluster_numbers_len=len(set(adata.obs['leiden'].tolist()))
         if cluster_numbers_len==len(new_cluster_names):
             adata.obs[new_obs_key]=adata.obs['leiden']
             adata.rename_categories(new_obs_key, new_cluster_names)
-    ##################### cluster remnameing #####END
     return
 
-def rename_leiden_clusters(adata,rename_cluster=False,new_cluster_names=None,new_obs_key='Cell_Clusters_Named',
-                           reorder_cluster_names=False,new_cluster_names_order=None, **parameters):
+def rename_leiden_clusters(
+    adata: anndata.AnnData | None = None,
+    rename_cluster: bool = False,
+    new_cluster_names: List[str] | None = None,
+    new_obs_key: str = 'Cell_Clusters_Named',
+    reorder_cluster_names: bool = False,
+    new_cluster_names_order: List[str] | None = None,
+    **parameters: Any
+):
     '''
     rename_leiden_clusters_old(adata,parameters=None,rename_cluster=False,new_cluster_names=None,new_obs_key='Cell_Clusters_Named'):
     '''
-
-    ##################### cluster remnameing 
     if rename_cluster==True:
         leiden_number_list=adata.obs['leiden'].value_counts().index.tolist()
         #new_cluster_names=adata.uns["parameters"]['new_cluster_names']
@@ -54,21 +71,19 @@ def rename_leiden_clusters(adata,rename_cluster=False,new_cluster_names=None,new
         adata.obs[new_obs_key] = adata.obs[new_obs_key].map(cluster_name_dict).fillna('Unknown').astype('category')
         if reorder_cluster_names:
             adata.obs[new_obs_key] = adata.obs[new_obs_key].cat.reorder_categories(new_cluster_names_order, ordered=True)
-    ##################### cluster remnameing #####END
     return
 
 def rename_leiden_clusters(
-    adata,
-    rename_cluster=False,
-    new_cluster_names=None,
-    new_obs_key='Cell_Clusters_Named',
-    reorder_cluster_names=False,
-    new_cluster_names_order=None,
-    **parameters
+    adata: anndata.AnnData | None = None,
+    rename_cluster: bool = False,
+    new_cluster_names: List[str] | None = None,
+    new_obs_key: str = 'Cell_Clusters_Named',
+    reorder_cluster_names: bool = False,
+    new_cluster_names_order: List[str] | None = None,
+    **parameters: Any
 ):
     '''
     Rename Leiden clusters using a provided list of new cluster names.
-    
     Parameters:
     - adata: AnnData object
     - rename_cluster: Boolean flag to perform renaming
@@ -115,7 +130,15 @@ def rename_leiden_clusters(
 
 
 ""
-def leiden_cluster_sil_score(adata, leiden_res=1, n_jobs=8,savefig=False,output_dir="./figures/",output_prefix="adata"):
+def leiden_cluster_sil_score(
+    adata: anndata.AnnData | None = None,
+    leiden_res: float = 1.0,
+    n_jobs: int = 1,
+    savefig: bool = False,
+    output_dir: str = "./figures/",
+    output_prefix: str = "adata",
+    **parameters: Any
+):
     """
     defualt values :
     leiden_cluster_sil_score(
@@ -222,7 +245,18 @@ def leiden_cluster_sil_score(adata, leiden_res=1, n_jobs=8,savefig=False,output_
 
 
 ""
-def silhouette_walk_Largest_drop(adata,leiden_res_start=0.025,leiden_res_end=2,leiden_res_step=0.025,print_per_step=False, n_jobs=8,savetable=False,savefig=False,output_dir="./figures/",output_prefix="adata"):
+def silhouette_walk_Largest_drop(
+    adata: anndata.AnnData | None = None,
+    leiden_res_start: float = 0.025,
+    leiden_res_end: float = 2.0,
+    leiden_res_step: float = 0.025,
+    print_per_step: bool = False,
+    n_jobs: int = 1,
+    savetable: bool = False,
+    savefig: bool = False,
+    output_dir: str = "./figures/",
+    output_prefix: str = "adata",
+):
     """
     defualt values :
     leiden_res_start=0.025,leiden_res_end=2,leiden_res_step=0.025,print_per_step=False,
@@ -412,8 +446,18 @@ def silhouette_walk_Largest_drop(adata,leiden_res_start=0.025,leiden_res_end=2,l
 
 
 ""
-def silhouette_walk_4_Largest_drops(adata,leiden_res_start=0.025,leiden_res_end=2,leiden_res_step=0.025,print_per_step=False,n_jobs=8,savetable=False,savefig=False,
-                                       output_dir="./figures/",output_prefix="adata"):
+def silhouette_walk_4_Largest_drops(
+    adata: anndata.AnnData | None = None,
+    leiden_res_start: float = 0.025,
+    leiden_res_end: float = 2.0,
+    leiden_res_step: float = 0.025,
+    print_per_step: bool = False,
+    n_jobs: int = 1,
+    savetable: bool = False,
+    savefig: bool = False,
+    output_dir: str = "./figures/",
+    output_prefix: str = "adata"
+):
     """
     defualt values :
     leiden_res_start=0.025,leiden_res_end=2,leiden_res_step=0.025,print_per_step=False,
@@ -450,24 +494,21 @@ def silhouette_walk_4_Largest_drops(adata,leiden_res_start=0.025,leiden_res_end=
     sc.settings.n_jobs = n_jobs  ## try this sometime
 
     ################################################################################# directory set up 
-    os.makedirs(output_dir+output_prefix, exist_ok=True)
-    
-    os.makedirs(output_dir+output_prefix+'/tables/', exist_ok=True)
-    dataset_tables_output_directory=output_dir+output_prefix+'/tables/'
-    
-    os.makedirs(output_dir+output_prefix+'/figures/', exist_ok=True)
-    dataset_figures_output_directory=output_dir+output_prefix+'/figures/'
+    if savefig:
+        os.makedirs(output_dir+output_prefix, exist_ok=True)
 
-    sc.settings.figdir=dataset_figures_output_directory
+        os.makedirs(output_dir+output_prefix+'/tables/', exist_ok=True)
+        dataset_tables_output_directory=output_dir+output_prefix+'/tables/'
+
+        os.makedirs(output_dir+output_prefix+'/figures/', exist_ok=True)
+        dataset_figures_output_directory=output_dir+output_prefix+'/figures/'
+
+        sc.settings.figdir=dataset_figures_output_directory
     ################################################################################# directory set up END   
 
 
 ###### cell checks the cluster at the 4 largest drops in average Silscore
 # leiden resolutioni set at value before the pargest drop  if not changed after
-
-
-
-
 
 
     leiden_res_range= np.arange(leiden_res_start,leiden_res_end, leiden_res_step).tolist()

@@ -2,6 +2,9 @@
 import scanpy as sc
 import numpy as np
 import matplotlib.pyplot as plt
+import anndata
+from typing import Any, Dict, Optional, List
+
 
 # set up logging within the module (not the root logger)
 import logging
@@ -10,8 +13,12 @@ logger = logging.getLogger("sctl.pp." + __name__leaf)
 
 
 ### annotate_QC_genes and calculate_qc_metrics functions
-def annotate_QC_genes(adata,organism = 'human' ,**parameters):
-    """ 
+def annotate_QC_genes(
+    adata: anndata.AnnData | None = None,
+    organism: str = 'human',
+    **parameters: Any
+):
+    """
     annotate_QC_genes
     """
     logger.info(f"Organism is set to {organism}")
@@ -32,16 +39,13 @@ def annotate_QC_genes(adata,organism = 'human' ,**parameters):
         adata.var['malat1'] = adata.var_names.str.contains(("Malat1"))  # MALAT1 genes as 'malat1'
     return 
 
-def calculate_qc_metrics(adata,**parameters):
-    """ 
+def calculate_qc_metrics(
+    adata: anndata.AnnData | None = None,
+    **parameters: Any
+):
+    """
     calculate_qc_metrics
-    # add code to check if genes already annotated 
-    #### code 
-    sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True) # mitocohndrial  genes
-    sc.pp.calculate_qc_metrics(adata, qc_vars=['ribo'], percent_top=None, log1p=False, inplace=True) # ribosomal genes
-    sc.pp.calculate_qc_metrics(adata, qc_vars=['hb'], percent_top=None, log1p=False, inplace=True) # hemoglobin genes.
-    sc.pp.calculate_qc_metrics(adata, qc_vars=['malat1'], percent_top=None, log1p=False, inplace=True) # MALAT1 gene.
-    return 
+    # add code to check if genes already annotated  
     """
     #sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True) # mitocohndrial  genes
     #sc.pp.calculate_qc_metrics(adata, qc_vars=['ribo'], percent_top=None, log1p=False, inplace=True) # ribosomal genes
@@ -54,16 +58,8 @@ def calculate_qc_metrics(adata,**parameters):
 
 
 ### plot functions
-def plot_QC_metrics_scatter(adata):
+def plot_QC_metrics_scatter(adata: anndata.AnnData | None = None,):
     '''
-    #### code 
-    figQC, (ax1,ax2,ax3,ax4,ax5) = plt.subplots(1 ,5,figsize=(20,4), gridspec_kw={'wspace':0.9})
-    sc.pl.scatter(adata, x='total_counts', y='n_genes_by_counts',ax=ax1, show=False) # plot number of dected genes vs total counts 
-    sc.pl.scatter(adata, x='total_counts', y='pct_counts_mt',ax=ax2, show=False) #percent mt counts vs total counts
-    sc.pl.scatter(adata, x='total_counts', y='pct_counts_ribo',ax=ax3, show=False) #percent ribo counts vs total counts
-    sc.pl.scatter(adata, x='total_counts', y='pct_counts_malat1',ax=ax4, show=False) #percent HB counts vs total count
-    sc.pl.scatter(adata, x='total_counts', y='pct_counts_hb',ax=ax5, show=False) #percent HB counts vs total counts 
-    
     '''
     figQC, (ax1,ax2,ax3,ax4,ax5) = plt.subplots(1 ,5,figsize=(20,4), gridspec_kw={'wspace':0.9})
     sc.pl.scatter(adata, x='total_counts', y='n_genes_by_counts',ax=ax1, show=False) # plot number of dected genes vs total counts 
@@ -73,16 +69,9 @@ def plot_QC_metrics_scatter(adata):
     sc.pl.scatter(adata, x='total_counts', y='pct_counts_hb',ax=ax5, show=False) #percent HB counts vs total counts 
     return
 
-def plot_QC_metrics_violin(adata):
+def plot_QC_metrics_violin(adata: anndata.AnnData | None = None,):
     '''
     #### code 
-    fig1, (ax1,ax2,ax3,ax4,ax5,ax6) = plt.subplots(1 ,6,figsize=(20,4), gridspec_kw={'wspace':0.9})
-    sc.pl.violin(adata, ['n_genes_by_counts'], jitter=0.4,ax=ax1, show=False)
-    sc.pl.violin(adata, ['total_counts'], jitter=0.4 ,ax=ax2, show=False)
-    sc.pl.violin(adata, [ 'pct_counts_mt'], jitter=0.4,ax=ax3, show=False) # mitocohndrial  genes
-    sc.pl.violin(adata, [ 'pct_counts_ribo'], jitter=0.4,ax=ax4, show=False) # ribosomal genes
-    sc.pl.violin(adata, [ 'pct_counts_malat1'], jitter=0.4,ax=ax5, show=False) # hemoglobin genes.
-    sc.pl.violin(adata, [ 'pct_counts_hb'], jitter=0.4,ax=ax6, show=False) # hemoglobin genes.   
     '''
     fig1, (ax1,ax2,ax3,ax4,ax5,ax6) = plt.subplots(1 ,6,figsize=(20,4), gridspec_kw={'wspace':0.9})
     sc.pl.violin(adata, ['n_genes_by_counts'], jitter=0.4,ax=ax1, show=False)
@@ -93,14 +82,9 @@ def plot_QC_metrics_violin(adata):
     sc.pl.violin(adata, [ 'pct_counts_hb'], jitter=0.4,ax=ax6, show=False) # hemoglobin genes.
     return
 
-def plot_qc_metrics(adata):
-    """ 
+def plot_qc_metrics(adata: anndata.AnnData | None = None, **parameters: Any):
+    """
     plot_qc_metrics of Annotated technical gene groups  and top 20 highly expressed
-    #### code 
-    plot_QC_metrics_violin(adata)  
-    plot_QC_metrics_scatter(adata) 
-    sc.pl.highest_expr_genes(adata, n_top=20, )
-    
     """
     plot_QC_metrics_violin(adata)  
     plot_QC_metrics_scatter(adata) 
@@ -111,15 +95,13 @@ def plot_qc_metrics(adata):
 ### plot functions end 
 
 
-### multi funcitons 
-    
-def annotate_n_view_adata_raw_counts(adata,**parameters):
-    """  
+### multi funcitons
+
+def annotate_n_view_adata_raw_counts(
+    adata: anndata.AnnData | None = None,
+    **parameters: Any):
+    """
     Annotate technical gene groups  and calculate qc metrics
-    #### code 
-    annotate_QC_genes(adata)
-    calculate_qc_metrics(adata)
-    plot_qc_metrics(adata)
     """
     annotate_QC_genes(adata,**parameters)
     calculate_qc_metrics(adata)
@@ -132,12 +114,13 @@ def annotate_n_view_adata_raw_counts(adata,**parameters):
 
 ### filter funcitons 
 
-def basic_filitering(adata,
-                     filter_cells_min_counts=0,
-                      filter_cells_min_genes=200,
-                     filter_genes_min_cells=3,
-                     filter_genes_min_counts=0,
-                     **parameters):
+def basic_filitering(
+    adata: anndata.AnnData | None = None,
+    filter_cells_min_counts: int = 0,
+    filter_cells_min_genes: int = 200,
+    filter_genes_min_cells: int = 3,
+    filter_genes_min_counts: int = 0,
+    **parameters: Any):
     """ Basic Filtering
   
     """
@@ -169,23 +152,23 @@ def basic_filitering(adata,
 
 
 
-def filter_cells_by_anotated_QC_gene(adata,
-                                    filter_ncount=True,
-                                    n_genes_bycounts=10000,
-                                    filter_pct_mt=True,
-                                    percent_mt=20,
-                                    over_percent_mt=0,
-                                    filter_pct_ribo=False,
-                                    percent_ribo=100,
-                                    over_percent_ribo=0,
-                                    filter_pct_hb=False,
-                                    percent_hb=100,
-                                    over_percent_hb=0,
-                                    filter_pct_malat1=False,
-                                    percent_malat1=100,
-                                    over_percent_malat1=0,
-                                      **parameters
-                                    ):
+def filter_cells_by_anotated_QC_gene(
+    adata: anndata.AnnData | None = None,
+    filter_ncount: bool | None = True,
+    n_genes_bycounts: int = 10000,
+    filter_pct_mt: bool | None = True,
+    percent_mt: int = 20,
+    over_percent_mt: int = 0,
+    filter_pct_ribo: bool | None = False,
+    percent_ribo: int = 100,
+    over_percent_ribo: int = 0,
+    filter_pct_hb: bool | None = False,
+    percent_hb: int = 100,
+    over_percent_hb: int = 0,
+    filter_pct_malat1=False,
+    percent_malat1=100,
+    over_percent_malat1=0,
+    **parameters: Any):
     """  Remove cells that have too many mitochondrial genes expressed or too many total counts:
   #### code
 
@@ -240,14 +223,15 @@ def filter_cells_by_anotated_QC_gene(adata,
     return adata
 
 
-def remove_genes(adata,
-                remove_MALAT1=False,
-                remove_MT=False,
-                remove_HB=False,
-                remove_RP_SL=False,
-                remove_MRP_SL=False,
-                 **parameters
-                ):
+def remove_genes(
+    adata: anndata.AnnData | None = None,
+    remove_MALAT1: bool | None = False,
+    remove_MT: bool | None = False,
+    remove_HB: bool | None = False,
+    remove_RP_SL: bool | None = False,
+    remove_MRP_SL: bool | None = False,
+    **parameters: Any
+):
     """ ################################# Remove Filter out genes with ""techincal bias""
     
      

@@ -4,7 +4,7 @@ Mostly scanpy wrappers and tools that use adata objects to stream line single ce
 # Installation
       git clone  <this repo>
       cd <this repo>
-      conda env remove -n sctl
+      conda env remove -n sctl  # Removes any existing 'sctl' environment
       conda env create -f sctl.yaml
       conda activate sctl
 
@@ -12,7 +12,13 @@ Mostly scanpy wrappers and tools that use adata objects to stream line single ce
       
       git clone  <this repo>
       cd <this repo>
-      pip install -e .
+      pip install -e . # Installs the package in editable mode for development
+
+# Environment update
+      conda env update -f sctl.yaml
+
+# After installation, verify the package:
+    python -c "import single_cell_python_tools as sctl; print(sctl.__version__)"
 
 # Package import
       import single_cell_python_tools as sctl
@@ -158,14 +164,6 @@ check out the example notebook folders
 
 # Getting started
 
-## Clone this repo
-
-clone this repo into into to the directory where you keep your cloned python packages
-
-```
-cd home/ubuntu/projects/github_repos
-https://github.com/gitbenlewis/single_cell_python_tools.git
-```
 
 ## Code to add to the start of a jupyter notebook in order to run the package
 ``` 
@@ -187,21 +185,15 @@ import single_cell_python_tools as sctl
 I recommend placing all your github repos (packages and analysis_project_repos) in the same parent directory that way you can use relative paths to access packages from your analysis_project_repos.\
 This way the same notebook will work on your aws enviroment as as well as your local envirmoment ( without changing path variables).\
 For example adding, adding '../../' to your sys.path from any of the notebooks in the example direcotry tree below will give you access to both the single_cell_python_tools and the second_favorite_package_repo_directory regardless of where the "github_repos" is located.
-> github_repos
->> single_cell_python_tools
->> 
->> second_favorite_package_repo_directory
->> 
->> singlecell_analysis_project_repo
->>> singlecell_analysis_project_A
->>>> 00_A_notebook\
->>>> 01_A_notebook\
->>>> 02_A_notebook
->>>
->>> singlecell_analysis_project_B
->>>> 00_B_notebook\
->>>> 01_B_notebook\
->>>> 02_B_notebook
+
+Recommended directory structure:
+github_repos/
+  ├── single_cell_python_tools/
+  ├── second_favorite_package_repo/
+  └── singlecell_analysis_project_repo/
+      ├── singlecell_analysis_project_A/
+      └── singlecell_analysis_project_B/
+
 
 
 # single_cell_python_tools package functions

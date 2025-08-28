@@ -3,16 +3,20 @@ channels:
   - conda-forge
 dependencies:
   # ─── core Python stack ──────────────────────────────────────────
-  - python >=3.10,<3.11            # match the 3.10 you’re using
+  - python =3.10                    # keep 3.10 to avoid RC builds
   - pip
-  - numpy 2.2                   # latest stable; avoid 2.x prerelease wheels
+  # numba 0.61 supports NumPy <2.3; keep on conda-forge/openblas
+  - numpy >=1.24,<2.3
   - pandas >=2.2
   - scipy >=1.14
   - scikit-learn >=1.5
+  - scikit-image >=0.21
+  - scikit-misc >=0.5
+  - statsmodels >=0.14
   - matplotlib >=3.9
   - seaborn >=0.13
-  - numba >=0.61
-  - llvmlite >=0.44
+  - numba =0.61.*
+  - llvmlite =0.44.*               # matched to numba 0.61
 
   # ─── single-cell / graph stack ─────────────────────────────────
   - scanpy >=1.11
@@ -21,18 +25,20 @@ dependencies:
   - leidenalg >=0.10
   - pynndescent >=0.5
   - umap-learn >=0.5
+  - gseapy >=1.1.9
+  - bbknn >=1.6
 
   # ─── misc utilities ────────────────────────────────────────────
   - requests >=2.32
   - tqdm >=4.67
   - ipython >=8.35
   - ipykernel >=6.29
-  - jupyterlab_widgets
+  - ipywidgets >=8.1
+  - jupyterlab_widgets >=3.0
   - widgetsnbextension
   - session-info
-  - session-info2
   - psutil
 
   # ─── install your package in editable mode ─────────────────────
-  #- pip:
-  #    - -e .     # assumes you run 'conda env create -f sctl.yaml' in repo root
+  - pip:
+      - -e .     # assumes you run 'conda env create -f sctl.yaml' in repo root

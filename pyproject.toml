@@ -8,7 +8,7 @@ version = "0.0.1"
 description     = "Wrappers and utilities for single-cell Scanpy workflows"
 readme      = "README.md"
 license     = { file = "LICENSE" }
-requires-python = ">=3.9"
+requires-python = ">=3.10,<3.11"
 authors = [{name = "Benjamin Lewis"}]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -17,13 +17,40 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies = [
-  "scanpy>=1.10",
+  # Core Python stack
+  # Match conda env and numba 0.61 compatibility
+  "numpy>=1.24,<2.3",
+  "pandas>=2.2",
+  "scipy>=1.14",
+  "scikit-learn>=1.5",
+  "scikit-image>=0.21",
+  "scikit-misc>=0.5",
+  "statsmodels>=0.14",
+  "matplotlib>=3.9",
+  "seaborn>=0.13",
+  "numba>=0.61,<0.62",
+  "llvmlite>=0.44,<0.45",
+
+  # Single-cell/Graph stack
+  "scanpy>=1.11",
   "anndata>=0.10",
-  "numpy>=2.0",
-  "pandas>=2.0",
-  "python-igraph>=0.10.0",
-  "leidenalg>=0.10.0",
-  "requests>=2.0",
+  "python-igraph>=0.11",
+  "leidenalg>=0.10",
+  "pynndescent>=0.5",
+  "umap-learn>=0.5",
+  "gseapy>=1.1.9",
+  "bbknn>=1.6",
+
+  # Misc utilities
+  "requests>=2.32",
+  "tqdm>=4.67",
+  "ipython>=8.35",
+  "ipykernel>=6.29",
+  "ipywidgets>=8.1",
+  "jupyterlab_widgets>=3.0",
+  "widgetsnbextension",
+  "session-info",
+  "psutil",
 ]
 
 [project.urls]

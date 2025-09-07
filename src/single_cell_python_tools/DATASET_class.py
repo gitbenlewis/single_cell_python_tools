@@ -158,6 +158,7 @@ class DATASET_class:
             #### processing parameters and options
             "filter_genes_min_counts_normed":0,
             "normalize_total_target_sum" : 1e4,  # scanpy  default 1e4
+            'HVG_flavor' : "seurat", # scanpy default seurat
             "HVG_min_mean"  :  0.0125, # scanpy  default 0.0125
             "HVG_max_mean"  :  3, # scanpy  default 3
             "HVG_min_disp"  :  0.5, # scanpy  default 0.5

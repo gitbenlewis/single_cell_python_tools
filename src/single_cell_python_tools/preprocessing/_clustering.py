@@ -33,11 +33,11 @@ def leiden_clustering(
     return
 
 
-def rename_leiden_clusters_old(
+def rename_leiden_clusters_old_old(
     adata: anndata.AnnData | None = None,
     rename_cluster: bool = False,
     new_cluster_names: List[str] | None = None,
-    new_obs_key: str = 'Cell_Clusters',
+    new_obs_key: str = 'Cell_Clusters_Named',
     **parameters: Any
 ):
     '''
@@ -50,7 +50,7 @@ def rename_leiden_clusters_old(
             adata.rename_categories(new_obs_key, new_cluster_names)
     return
 
-def rename_leiden_clusters(
+def rename_leiden_clusters_old(
     adata: anndata.AnnData | None = None,
     rename_cluster: bool = False,
     new_cluster_names: List[str] | None = None,

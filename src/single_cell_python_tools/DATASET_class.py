@@ -442,6 +442,18 @@ class DATASET_class:
         logger.info(f"Renamed {downloaded_file} to {renamed_downloaded_file_name} in {downloaded_file_dir}")
         return self
 
+    def make_output_dirs_if_not_exist(self):
+        """Make output directories if they do not exist."""
+        self._check_if_output_directories_exist()
+        if not self.output_directories_exist:
+            self._make_output_dirs()
+            self.output_directories_exist = True
+            logger.info("Output directories created.")
+        else:
+            logger.info("Output directories already exist. No action taken.")
+        return self
+
+
     # ------------------------------------------------------------------
     # Core pipeline steps 
     # QC
@@ -477,7 +489,11 @@ class DATASET_class:
         #.) check if outputdirectories exist if not make them 
         self._check_if_output_directories_exist()
         if not self.output_directories_exist:
-            self._make_output_dirs()
+            if self.make_empty_output_dirs:
+                logger.warning("output directories do not exist. making them now")
+                self._make_output_dirs()
+            else:
+                logger.warning("output directories do not exist. set 'make_empty_output_dirs' to True \nin parameters to make them at init or at .load_data() step")
 
         if self.path== "" and self.input_file_path == "":
             raise ValueError("path and input_file_path must be set")

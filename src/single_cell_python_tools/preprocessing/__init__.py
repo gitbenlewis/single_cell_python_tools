@@ -9,12 +9,15 @@ Sub-modules:
 from __future__ import annotations
 
 # Import the three implementation files as public sub-namespaces
+from . import _io
 from . import _qc
 from . import _transform_data
 from . import _clustering
+from . import _io
 
 # Re-export their user-facing symbols so that
 # `sctl.pp.basic_filtering()` works.
+from ._io              import *  
 from ._qc              import *  
 from ._transform_data  import * 
 from ._clustering      import *  

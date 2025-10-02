@@ -16,6 +16,7 @@ import os, platform, shlex, subprocess, tarfile,pathlib, re, requests
 from urllib.parse import urlparse
 from cgi import parse_header   
 import gzip, shutil
+import inspect
 # -----------------------------------------------------------------------------
 # Third‑party libs
 # -----------------------------------------------------------------------------
@@ -50,6 +51,9 @@ logger = logging.getLogger("sctl." + __name__leaf)
 #if not logger.hasHandlers():
 #    logger.addHandler(console_handler)
 
+# Custom colormap where zero values are represented by grey
+import matplotlib.colors as mcolors
+cmap = mcolors.ListedColormap(['gray'] + list(plt.cm.viridis(np.linspace(0, 1, 256))))
 
 class DATASET_class:
     """End-to-end single-cell workflow with a central *parameters* dictionary..."""
@@ -536,6 +540,12 @@ class DATASET_class:
         logger.info(f"self.adata \n{self.adata}")
         return self
     
+    def reset_cellxgene_var_names(self, **kwargs):
+        """ Reset var names for cellxgene datasets """
+        kw = self._merge( kwargs)
+        sctl.pp.reset_cellxgene_var_names(self.adata,**kw)
+        return self
+    
     # ------------------------------------------------------------------
     # QC : Core pipeline step
     # ------------------------------------------------------------------
@@ -706,7 +716,9 @@ class DATASET_class:
     # ------------------------------------------------------------------
     # Ploting processed data   : Core pipeline step
     # ------------------------------------------------------------------
-    def marker_gene_umaps(self, **kwargs):
+    def marker_gene_umaps_old(self,
+                         # basis: str | None = None,
+                            **kwargs):
         """  marker_gene_umaps"""
         # set up the parameters for the function
         kw = self._merge( kwargs)
@@ -721,13 +733,16 @@ class DATASET_class:
         wspace= kw.get("wspace", None)
         title= kw.get("title", None)
         rename_clusters = kw.get("rename_cluster",False)
+        basis = kw.get("basis", None)
         # plot the marker genes
         marker_genes = kw.get("marker_genes", self.adata.uns["parameters"]['umap_marker_gene_list'])
         # check if the marker_genes are in the adata.raw.var_names
         vars_to_check = self.adata.raw.var_names if self.adata.raw is not None else self.adata.var_names
-        if not all(gene in vars_to_check for gene in marker_genes):
+        obs_key_to_check = self.adata.obs.keys()
+        if not all((gene in vars_to_check) or (gene in obs_key_to_check)
+           for gene in marker_genes):
             missing_genes = [gene for gene in marker_genes if gene not in vars_to_check]
-            logger.warning(f"Marker genes {missing_genes} are not in the adata.raw.var_names or adata.var_names")
+            logger.warning(f"Marker genes {missing_genes} are not in\n the adata.var_names or adata.obs.keys()")
             # remove the missing genes from the marker_genes list
             marker_genes = [gene for gene in marker_genes if gene in vars_to_check]
             logger.info(f"Using marker genes {marker_genes} for plotting")
@@ -737,9 +752,59 @@ class DATASET_class:
             additonal_plots=kw.get("additonal_plots", ['leiden'])
         else:
             additonal_plots=kw.get("additonal_plots", [])
-
-        sc.pl.umap(self.adata, color=marker_genes + additonal_plots,ncols=ncols,
-                   wspace=wspace,title=title,vmax=vmax,vmin=vmin, palette=palette,cmap=cmap)
+        if basis is None:
+            sc.pl.umap(self.adata, color=marker_genes + additonal_plots,ncols=ncols,
+                    wspace=wspace,title=title,vmax=vmax,vmin=vmin, palette=palette,cmap=cmap)
+        elif basis is not None:
+            sc.pl.embedding(self.adata, basis=basis, color=marker_genes + additonal_plots,ncols=ncols,
+                    wspace=wspace,title=title,vmax=vmax,vmin=vmin, palette=palette,cmap=cmap)
+        return self
+    def marker_gene_umaps(self,**kwargs):
+        """  marker_gene_umaps"""
+        #) -------- # set up the parameters for the function
+        kw = self._merge( kwargs)
+        kw.setdefault("basis", None)
+        kw.setdefault("ncols",  6)
+        kw.setdefault("palette", sc.pl.palettes.godsnot_102[1:])
+        kw.setdefault("vmin", 0)
+        kw.setdefault("cmap", cmap)
+        kw.setdefault("additonal_plots", [])
+        #) -------- # inspect the parameters of sc.pl.umap and sc.pl.embedding
+        _UMAP_PARAMS = {
+            name for name in inspect.signature(sc.pl.umap).parameters
+            if name != "adata"}     # first positional arg; we pass it separately
+        _EMBED_PARAMS = {
+            name for name in inspect.signature(sc.pl.embedding).parameters
+            if name != "adata"}
+        #) -------- remove keys from kw that are not needed for sc.pl.umap or sc.pl.embedding
+        umap_kw={k: v for k, v in kw.items() if k in _UMAP_PARAMS}
+        embed_kw={k: v for k, v in kw.items() if k in _EMBED_PARAMS}
+        #) -------- make sure the marker genes and additonal_plots keys are in the adata
+        marker_genes = kw.get("marker_genes", self.adata.uns["parameters"]['umap_marker_gene_list'])
+        if self.leiden_clusters_renamed:
+            additonal_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  
+        elif self.leiden_clustering_done:
+            additonal_plots=kw.get("additonal_plots", ['leiden'])
+        else:
+            additonal_plots=kw.get("additonal_plots", [])
+        keys_to_plot=marker_genes + additonal_plots
+        # check if the keys_to_plot are in the adata.obs.keys() or adata.raw.var_names or adata.var_names
+        vars_to_check = self.adata.raw.var_names if self.adata.raw is not None else self.adata.var_names
+        obs_key_to_check = self.adata.obs.keys()
+        keys_to_check=vars_to_check.tolist() + obs_key_to_check.tolist()
+        if not all((gene in vars_to_check) or (gene in obs_key_to_check)
+           for gene in keys_to_plot):
+            missing_keys = [key for key in keys_to_plot if key not in keys_to_check]
+            logger.warning(f"keys_to_plot {missing_keys} are not in\n the adata.var_names or adata.obs.keys()")
+            # remove the missing genes from the marker_genes list
+            keys_to_plot = [key for key in keys_to_plot if key in keys_to_check]
+            logger.info(f"Using marker genes {keys_to_plot} for plotting")
+        #) -------- plot the marker genes
+        if kw['basis'] is None:
+            sc.pl.umap(self.adata,color=keys_to_plot,**umap_kw)
+        elif kw['basis']  is not None:
+            sc.pl.embedding(self.adata, color=keys_to_plot,**embed_kw)
+        return self
     
     ### Ploting processed data mehtods
     def silhouette_score_n_plot(self, **kwargs):

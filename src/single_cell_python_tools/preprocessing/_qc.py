@@ -282,8 +282,6 @@ def remove_genes(
 ### filter funcitons END
 
 
-
-
 # ------------------------------------------------------------------
 # Auto-export: collect every function or class defined *in this file*
 # whose name does NOT start with an underscore

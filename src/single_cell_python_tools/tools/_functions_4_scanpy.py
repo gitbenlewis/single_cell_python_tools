@@ -887,6 +887,7 @@ def average_feature_expression(
     avg_expression_df = pd.DataFrame(avg_expression_list, index=unique_groups, columns=var_names)
 
     return avg_expression_df
+# Example usage:  sctl.tl.average_feature_expression()
 '''
 Neuron_subtype_split_avg_expression_df = sctl.tl.average_feature_expression(adata, groupby_key, use_raw=True, log1p=False, zscore=False)
 df=Neuron_subtype_split_avg_expression_df[gene_list]

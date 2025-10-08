@@ -62,7 +62,7 @@ def reset_cellxgene_var_names(adata: anndata.AnnData,
     if adata.raw is not None:
         adata.raw = adata.copy()  # reset raw to adata with new var_names
 
-    logger.info("Var names have been reset using cellxgene conventions.")
+    logger.info(f"Var_names reset using column '{feature_name_col}' \nwith uniqueness ensured by appending index where necessary.")
 
 # ------------------------------------------------------------------
 # Auto-export: collect every function or class defined *in this file*

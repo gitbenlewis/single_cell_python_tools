@@ -747,16 +747,16 @@ class DATASET_class:
             marker_genes = [gene for gene in marker_genes if gene in vars_to_check]
             logger.info(f"Using marker genes {marker_genes} for plotting")
         if self.leiden_clusters_renamed:
-            additonal_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  
+            obskey_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  
         elif self.leiden_clustering_done:
-            additonal_plots=kw.get("additonal_plots", ['leiden'])
+            obskey_plots=kw.get("additonal_plots", ['leiden'])
         else:
-            additonal_plots=kw.get("additonal_plots", [])
+            obskey_plots=kw.get("additonal_plots", [])
         if basis is None:
-            sc.pl.umap(self.adata, color=marker_genes + additonal_plots,ncols=ncols,
+            sc.pl.umap(self.adata, color=marker_genes + obskey_plots,ncols=ncols,
                     wspace=wspace,title=title,vmax=vmax,vmin=vmin, palette=palette,cmap=cmap)
         elif basis is not None:
-            sc.pl.embedding(self.adata, basis=basis, color=marker_genes + additonal_plots,ncols=ncols,
+            sc.pl.embedding(self.adata, basis=basis, color=marker_genes + obskey_plots,ncols=ncols,
                     wspace=wspace,title=title,vmax=vmax,vmin=vmin, palette=palette,cmap=cmap)
         return self
     def marker_gene_umaps(self,**kwargs):
@@ -768,7 +768,7 @@ class DATASET_class:
         kw.setdefault("palette", sc.pl.palettes.godsnot_102[1:])
         kw.setdefault("vmin", 0)
         kw.setdefault("cmap", cmap)
-        kw.setdefault("additonal_plots", [])
+        kw.setdefault("obskey_plots", [])
         #) -------- # inspect the parameters of sc.pl.umap and sc.pl.embedding
         _UMAP_PARAMS = {
             name for name in inspect.signature(sc.pl.umap).parameters
@@ -779,15 +779,15 @@ class DATASET_class:
         #) -------- remove keys from kw that are not needed for sc.pl.umap or sc.pl.embedding
         umap_kw={k: v for k, v in kw.items() if k in _UMAP_PARAMS}
         embed_kw={k: v for k, v in kw.items() if k in _EMBED_PARAMS}
-        #) -------- make sure the marker genes and additonal_plots keys are in the adata
+        #) -------- make sure the marker genes and obskey_plots keys are in the adata
         marker_genes = kw.get("marker_genes", self.adata.uns["parameters"]['umap_marker_gene_list'])
         if self.leiden_clusters_renamed:
-            additonal_plots=kw.get("additonal_plots", ['leiden', 'Cell_Clusters_Named'])  
+            obskey_plots=kw.get("obskey_plots", ['leiden', 'Cell_Clusters_Named'])  
         elif self.leiden_clustering_done:
-            additonal_plots=kw.get("additonal_plots", ['leiden'])
+            obskey_plots=kw.get("obskey_plots", ['leiden'])
         else:
-            additonal_plots=kw.get("additonal_plots", [])
-        keys_to_plot=marker_genes + additonal_plots
+            obskey_plots=kw.get("obskey_plots", [])
+        keys_to_plot=marker_genes + obskey_plots
         # check if the keys_to_plot are in the adata.obs.keys() or adata.raw.var_names or adata.var_names
         vars_to_check = self.adata.raw.var_names if self.adata.raw is not None else self.adata.var_names
         obs_key_to_check = self.adata.obs.keys()

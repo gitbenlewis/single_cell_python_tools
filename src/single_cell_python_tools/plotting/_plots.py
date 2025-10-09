@@ -300,8 +300,47 @@ def plot_batch_obs_key_of_obs_key2(
 ####################################################################################################################
 
 
+#### plots for adata distributions #################################################################################################################
 
-####################################################################################################################
+def plot_adata_raw_and_X(
+    adata: anndata.AnnData | None = None,
+    max_value_mask: float| None = 3e4,
+    savefig: bool| None = False,
+    output_dir: str| None = './project/',
+    output_prefix: str| None = "dataset_",
+    **kwargs
+):
+    '''plot adata raw counts and adata.X counts side by side'''
+    import matplotlib.pyplot as plt
+    import numpy as np
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+    # set figure title
+    fig.suptitle('Distribution of Feature Values in layers of adata object', fontsize=16)
+    row_totals_raw = adata.raw.X.sum(axis=1).A1
+    row_totals_X = adata.X.sum(axis=1).A1
+    ## plot adata.raw
+    raw_mask = row_totals_raw < max_value_mask
+    ax[0].hist(row_totals_raw[raw_mask], bins=100, color='blue', alpha=0.7)
+    stats_string_0=f'min: {row_totals_raw.min():.1f}\nmax: {row_totals_raw.max():.1f}\nmean: {row_totals_raw.mean():.1f}\nstd: {row_totals_raw.std():.1f}\n25%: {np.percentile(row_totals_raw, 25):.1f}\n50%: {np.percentile(row_totals_raw, 50):.1f}\n75%: {np.percentile(row_totals_raw, 75):.1f}\n99.9%: {np.percentile(row_totals_raw, 99.9):.1f}\ncount: {row_totals_raw.shape[0]:.0f}'
+    ax[0].set_title(f'adata.raw feature matrix')
+    ax[0].set_xlabel(f'Feature values per observation\n{stats_string_0}')
+    ax[0].set_ylabel('Number of observations')
+    ## plot adata.X
+    X_mask = row_totals_X < max_value_mask
+    ax[1].hist(row_totals_X[X_mask], bins=100, color='green', alpha=0.7)
+    stats_string_1=f'min: {row_totals_X.min():.1f}\nmax: {row_totals_X.max():.1f}\nmean: {row_totals_X.mean():.1f}\nstd: {row_totals_X.std():.1f}\n25%: {np.percentile(row_totals_X, 25):.1f}\n50%: {np.percentile(row_totals_X, 50):.1f}\n75%: {np.percentile(row_totals_X, 75):.1f}\n99.9%: {np.percentile(row_totals_X, 99.9):.1f}\ncount: {row_totals_X.shape[0]:.0f}'
+    ax[1].set_title(f'adata.X feature matrix')
+    ax[1].set_xlabel(f'Feature values per observation\n{stats_string_1}')
+    ax[1].set_ylabel('Number of observations')
+    plt.tight_layout()
+    plt.show()
+    if savefig==True:
+        os.makedirs(output_dir+output_prefix+'/figures/', exist_ok=True)
+        fig.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'adata_raw_and_X_dist.pdf')    
+    return fig, ax
+
+
+##### END plots for adata distributions ###############################################################################################################
 
 
 

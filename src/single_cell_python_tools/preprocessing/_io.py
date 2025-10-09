@@ -64,6 +64,39 @@ def reset_cellxgene_var_names(adata: anndata.AnnData,
 
     logger.info(f"Var_names reset using column '{feature_name_col}' \nwith uniqueness ensured by appending index where necessary.")
 
+
+import numpy as np
+import scipy.sparse as sp
+import anndata as ad
+from collections.abc import Sequence
+
+def _as_float32(matrix):
+    if matrix is None:
+        return matrix
+    if sp.issparse(matrix):
+        return matrix.astype(np.float32)
+    return np.asarray(matrix, dtype=np.float32)
+
+def downcast_layers_to_float32(
+    adata: ad.AnnData,
+    *,
+    include_X: bool = True,
+    include_raw: bool = False,
+    exclude_layers: Sequence[str] | None = None,
+) -> None:
+    """Convert AnnData layers (and optionally X/raw) to float32 in place."""
+    skip = set(exclude_layers or ())
+    for layer_key in list(adata.layers.keys()):
+        if layer_key in skip:
+            continue
+        adata.layers[layer_key] = _as_float32(adata.layers[layer_key])
+    if include_X:
+        adata.X = _as_float32(adata.X)
+    if include_raw and adata.raw is not None:
+        raw = adata.raw.to_adata()
+        raw.X = _as_float32(raw.X)
+        adata.raw = raw
+
 # ------------------------------------------------------------------
 # Auto-export: collect every function or class defined *in this file*
 # whose name does NOT start with an underscore

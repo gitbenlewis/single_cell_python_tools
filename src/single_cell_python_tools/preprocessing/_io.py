@@ -69,6 +69,7 @@ import numpy as np
 import scipy.sparse as sp
 import anndata as ad
 from collections.abc import Sequence
+from typing import Any
 
 def _as_float32(matrix):
     if matrix is None:
@@ -83,8 +84,10 @@ def downcast_layers_to_float32(
     include_X: bool = True,
     include_raw: bool = False,
     exclude_layers: Sequence[str] | None = None,
+    **kwargs: Any,
 ) -> None:
     """Convert AnnData layers (and optionally X/raw) to float32 in place."""
+    _ = kwargs  # intentionally unused; allows extra config to pass through
     skip = set(exclude_layers or ())
     for layer_key in list(adata.layers.keys()):
         if layer_key in skip:

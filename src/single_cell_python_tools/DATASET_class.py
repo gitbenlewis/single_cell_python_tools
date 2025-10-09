@@ -831,11 +831,18 @@ class DATASET_class:
         kw = self._merge( kwargs)
         self.adata=sctl.pl.plot_percent_obs_key2_per_batch_obs_key(self.adata,**kw)
         return self
-    def plot_adata_raw_and_X(self, **kwargs):
-        """  plot_adata_raw_and_X"""
+    ############# plot_adata_raw_and_X_rowdist
+    def plot_adata_row_total_dist(self, **kwargs):
+        """  plot_adata_row_total_dist"""
         # set up the parameters for the function
         kw = self._merge( kwargs)
-        sctl.pl.plot_adata_raw_and_X(self.adata,**kw)
+        sctl.pl.plot_adata_row_total_dist(self.adata,**kw)
+        return self
+    def plot_adata_raw_and_X_rowdist(self, **kwargs):
+        """  plot_adata_raw_and_X_rowdist"""
+        # set up the parameters for the function
+        kw = self._merge( kwargs)
+        sctl.pl.plot_adata_raw_and_X_rowdist(self.adata,**kw)
         return self
     
 

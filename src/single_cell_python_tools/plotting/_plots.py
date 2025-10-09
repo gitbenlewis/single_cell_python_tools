@@ -301,8 +301,89 @@ def plot_batch_obs_key_of_obs_key2(
 
 
 #### plots for adata distributions #################################################################################################################
+def plot_adata_row_total_dist(
+    adata: anndata.AnnData | None = None,
+    *,
+    layer: str = "X",
+    max_value_mask: float | None = 3e4,
+    savefig: bool = False,
+    output_dir: str = "./project/",
+    output_prefix: str = "dataset_",
+    **kwargs: Any,
+):
+    """Plot the distribution of row totals for one AnnData matrix layer."""
+    import os
+    from pathlib import Path
 
-def plot_adata_raw_and_X(
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if adata is None:
+        raise ValueError("adata must not be None")
+
+    if layer == "raw":
+        if adata.raw is None:
+            raise ValueError("adata.raw is None; cannot plot raw layer")
+        matrix = adata.raw.X
+        layer_label = "adata.raw"
+    elif layer == "X":
+        matrix = adata.X
+        layer_label = "adata.X"
+    else:
+        if layer not in adata.layers:
+            raise KeyError(f"Layer '{layer}' not found in adata.layers")
+        matrix = adata.layers[layer]
+        layer_label = f"adata.layers['{layer}']"
+
+    row_totals = matrix.sum(axis=1)
+    if hasattr(row_totals, "A1"):
+        row_totals = row_totals.A1
+    else:
+        row_totals = np.asarray(row_totals).ravel()
+
+    mask = np.full(row_totals.shape, True) if max_value_mask is None else row_totals < max_value_mask
+    values = row_totals[mask]
+    if values.size == 0:
+        raise ValueError(
+            "No row totals remain after applying max_value_mask; "
+            "consider increasing the threshold or disabling it."
+        )
+    if np.allclose(values, values[0]):
+        center_value = float(values[0])
+        epsilon = max(1.0, abs(center_value) * 0.05)
+        bins = [center_value - epsilon, center_value + epsilon]
+    else:
+        bins = 100
+
+    fig, ax = plt.subplots(figsize=(5, 6))
+    ax.hist(values, bins=bins, color="steelblue", alpha=0.7)
+    stats = (
+        f"min: {row_totals.min():.1f}\n"
+        f"max: {row_totals.max():.1f}\n"
+        f"mean: {row_totals.mean():.1f}\n"
+        f"std: {row_totals.std():.1f}\n"
+        f"25%: {np.percentile(row_totals, 25):.1f}\n"
+        f"50%: {np.percentile(row_totals, 50):.1f}\n"
+        f"75%: {np.percentile(row_totals, 75):.1f}\n"
+        f"99.9%: {np.percentile(row_totals, 99.9):.1f}\n"
+        f"count: {row_totals.shape[0]:.0f}"
+    )
+    ax.set_title(f"{layer_label} row-total distribution")
+    ax.set_xlabel(f"Feature values per observation\n{stats}")
+    ax.set_ylabel("Number of observations")
+    plt.tight_layout()
+    plt.show()
+
+    if savefig:
+        fig_dir = Path(output_dir) / output_prefix / "figures"
+        os.makedirs(fig_dir, exist_ok=True)
+        fig_path = fig_dir / f"{output_prefix}adata_{layer}_row_total_dist.pdf"
+        fig.savefig(fig_path)
+
+    return fig, ax
+
+
+def plot_adata_raw_and_X_rowdist_old(
     adata: anndata.AnnData | None = None,
     max_value_mask: float| None = 3e4,
     savefig: bool| None = False,
@@ -339,6 +420,78 @@ def plot_adata_raw_and_X(
         fig.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'adata_raw_and_X_dist.pdf')    
     return fig, ax
 
+def plot_adata_raw_and_X_rowdist(
+    adata: anndata.AnnData | None = None,
+    max_value_mask: float | None = 3e4,
+    savefig: bool | None = False,
+    output_dir: str | None = './project/',
+    output_prefix: str | None = "dataset_",
+    **kwargs
+):
+    """plot adata raw counts and adata.X counts side by side"""
+    import os
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if adata is None:
+        raise ValueError("adata must not be None")
+    if adata.raw is None:
+        raise ValueError("adata.raw is None; cannot plot raw layer")
+
+    def _prepare(matrix, label):
+        totals = matrix.sum(axis=1)
+        if hasattr(totals, "A1"):
+            totals = totals.A1
+        else:
+            totals = np.asarray(totals).ravel()
+        mask = np.full(totals.shape, True) if max_value_mask is None else totals < max_value_mask
+        values = totals[mask]
+        if values.size == 0:
+            raise ValueError(
+                f"No {label} row totals remain after applying max_value_mask; "
+                "consider increasing the threshold or disabling it."
+            )
+        if np.allclose(values, values[0]):
+            center = float(values[0])
+            epsilon = max(1.0, abs(center) * 0.05)
+            bins = [center - epsilon, center + epsilon]
+        else:
+            bins = 100
+        stats = (
+            f"min: {totals.min():.1f}\n"
+            f"max: {totals.max():.1f}\n"
+            f"mean: {totals.mean():.1f}\n"
+            f"std: {totals.std():.1f}\n"
+            f"25%: {np.percentile(totals, 25):.1f}\n"
+            f"50%: {np.percentile(totals, 50):.1f}\n"
+            f"75%: {np.percentile(totals, 75):.1f}\n"
+            f"99.9%: {np.percentile(totals, 99.9):.1f}\n"
+            f"count: {totals.shape[0]:.0f}"
+        )
+        return values, bins, stats
+
+    raw_values, raw_bins, raw_stats = _prepare(adata.raw.X, "adata.raw")
+    x_values, x_bins, x_stats = _prepare(adata.X, "adata.X")
+
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+    fig.suptitle('Distribution of Feature Values in layers of adata object', fontsize=16)
+
+    ax[0].hist(raw_values, bins=raw_bins, color='blue', alpha=0.7)
+    ax[0].set_title('adata.raw feature matrix')
+    ax[0].set_xlabel(f'Feature values per observation\n{raw_stats}')
+    ax[0].set_ylabel('Number of observations')
+
+    ax[1].hist(x_values, bins=x_bins, color='green', alpha=0.7)
+    ax[1].set_title('adata.X feature matrix')
+    ax[1].set_xlabel(f'Feature values per observation\n{x_stats}')
+    ax[1].set_ylabel('Number of observations')
+
+    plt.tight_layout()
+    plt.show()
+    if savefig:
+        os.makedirs(output_dir + output_prefix + '/figures/', exist_ok=True)
+        fig.savefig(output_dir + output_prefix + '/figures/' + output_prefix + 'adata_raw_and_X_dist.pdf')
+    return fig, ax
 
 ##### END plots for adata distributions ###############################################################################################################
 

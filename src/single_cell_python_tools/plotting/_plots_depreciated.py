@@ -23,6 +23,76 @@ sc.settings.set_figure_params(dpi=80, facecolor='white')
 
 
 ####################################################################################################################
+def plot_batch_obs_key_of_obs_key2_old(
+    adata: anndata.AnnData | None = None,
+    batch_obs_key: str = 'batch',
+    obs_key2: str = "leiden",
+    flavor: str = "pct_count",
+    figsize: tuple[int, int] = (10, 4),
+    savefig: bool = False,
+    output_dir: str = './project/',
+    output_prefix: str = "dataset_"
+):
+    '''
+    df, df_norm=adsctl.pl.plot_batch_obs_key_of_obs_key2(adata,savefig=False,output_dir='./project/',output_prefix="dataset_",batch_obs_key='batch',obs_key2="leiden",figsize=(10,4),flavor="pct_count")
+    makes two side by side bar charts, each bar is a batch_obs_key='batch category and each bar is stacked and colored by obs_key2="leiden"
+    left bar chart is fraction on y -axis 
+    right  bar chart is obs/cell count on y -axis 
+    flavor="pct_count"  >>> both charts
+    flavor="pct"  >>> only pct chart
+    flavor="count"  >>> only count chart
+
+    flavor="pct_count_barh"  >>> both charts
+    flavor="pct_barh"  >>> only pct chart
+    flavor="count_barh"  >>> only count chart
+    returns df, df_col_norm
+    '''
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    df_norm=pd.crosstab(adata.obs[obs_key2],adata.obs[batch_obs_key], normalize='index')
+    #print(df_norm)
+    df=pd.crosstab(adata.obs[obs_key2],adata.obs[batch_obs_key] )
+    #print(df)
+    if flavor=="pct_count":
+        fig1, axes = plt.subplots(nrows=1, ncols=2,figsize=figsize)
+        ax1=df_norm.plot.bar(stacked=True,ax=axes[0]).legend().set_visible(False)
+        ax2=df.plot.bar(stacked=True,ax=axes[1]).legend(loc='upper right')
+        if savefig==True:
+            fig1.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'crosstab_'+obs_key2+'_'+batch_obs_key+'.pdf')
+    if flavor=="pct":
+        fig1, axes = plt.subplots(nrows=1, ncols=1,figsize=figsize)
+        ax1=df_norm.plot.bar(stacked=True,ax=axes).legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
+        if savefig==True:
+            fig1.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'crosstab_'+obs_key2+'_'+batch_obs_key+'.pdf')
+    if flavor=="count":
+        fig1, axes = plt.subplots(nrows=1, ncols=1,figsize=figsize)
+        ax2=df.plot.bar(stacked=True,ax=axes).legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
+        if savefig==True:
+            fig1.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'crosstab_'+obs_key2+'_'+batch_obs_key+'.pdf')
+    if flavor=="pct_count_barh":
+        df_norm_sorted = df_norm.sort_index( ascending=False)
+        df_sorted = df.sort_index(ascending=False)
+        fig1, axes = plt.subplots(nrows=1, ncols=2,figsize=figsize)
+        ax1=df_norm_sorted.plot.barh(stacked=True,ax=axes[0]).legend().set_visible(False)
+        ax2=df_sorted.plot.bar(stacked=True,ax=axes[1]).legend(loc='upper right')
+        if savefig==True:
+            fig1.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'crosstab_'+obs_key2+'_'+batch_obs_key+'.pdf')
+    if flavor=="pct_barh":
+        df_norm_sorted = df_norm.sort_index( ascending=False)
+        fig1, axes = plt.subplots(nrows=1, ncols=1,figsize=figsize)
+        ax1=df_norm_sorted.plot.barh(stacked=True,ax=axes).legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
+        if savefig==True:
+            fig1.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'crosstab_'+obs_key2+'_'+batch_obs_key+'.pdf')
+    if flavor=="count_barh":
+        df_sorted = df.sort_index(ascending=False)
+        fig1, axes = plt.subplots(nrows=1, ncols=1,figsize=figsize)
+        ax2=df_sorted.plot.barh(stacked=True,ax=axes).legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
+        if savefig==True:
+            fig1.savefig(output_dir+output_prefix+'/figures/'+output_prefix+'crosstab_'+obs_key2+'_'+batch_obs_key+'.pdf')
+    return df, df_norm
+
+####################################################################################################################
 
 ####################################################################################################################
 

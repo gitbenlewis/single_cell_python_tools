@@ -128,24 +128,24 @@ def basic_filitering(
     #print(f" {adata.n_obs} observations BEFORE Basic Filtering")
     sc.pp.filter_cells(adata, min_genes=filter_cells_min_genes)  #min_genes=over_n_genes_bycounts
     logger.info(f" Filtering cells  sc.pp.filter_cells(adata, min_genes={filter_cells_min_genes})")
-    logger.info(f' {adata.n_obs} observations AFTER  min_genes Filtering, min_genes={filter_cells_min_genes}')
+    logger.info(f' {adata.n_obs} n_observations AFTER  min_genes Filtering, min_genes={filter_cells_min_genes}')
     #print(f'Filtering cells pp.filter_cells(adata, min_genes=filter_cells_min_genes)  Cells remaining : {adata.n_obs}')
     #print(f' {adata.n_obs} observations AFTER Basic Filtering, min_genes={filter_cells_min_genes}')
     sc.pp.filter_cells(adata,min_counts=filter_cells_min_counts)  #  / observations must have min # of coutns
     logger.info(f" Filtering cells sc.pp.filter_cells(adata,min_counts={filter_cells_min_counts})")
-    logger.info(f' {adata.n_obs} observations AFTER min_counts Filtering, min_counts={filter_cells_min_counts}')
+    logger.info(f' {adata.n_obs} n_observations AFTER min_counts Filtering, min_counts={filter_cells_min_counts}')
     #print(f'Filtering cells pp.filter_cells(adata, min_cells=filter_cells_min_counts)  Cells remaining : {adata.n_obs}')
     #print(f'min_counts=filter_cells_min_counts = ',filter_cells_min_counts )
-    logger.info(f' {adata.n_vars} features BEFORE Basic Filtering (min_cells and min_counts)')
+    logger.info(f' {adata.n_vars} n_vars BEFORE Basic Filtering (min_cells and min_counts)')
     #print(f' {adata.n_vars} features BEFORE Basic Filtering (min_cells and min_counts)')
     sc.pp.filter_genes(adata, min_cells=filter_genes_min_cells ) #genes must be present in min # of cells / observations
     logger.info(f" Filtering cells  sc.pp.filter_genes(adata, min_cells={filter_genes_min_cells})")
-    logger.info(f' {adata.n_vars} observations AFTER  min_genes Filtering, min_genes={filter_genes_min_cells}')
+    logger.info(f' {adata.n_vars} n_vars AFTER  min_cells Filtering, min_cells={filter_genes_min_cells}')
     #print(f'Filtering genes pp.filter_genes(adata, min_cells=filter_genes_min_cells)  Genes remaining : {adata.n_vars}')
     #print(f' {adata.n_vars} observations AFTER  min_genes Filtering, min_genes={filter_genes_min_cells}')
     sc.pp.filter_genes(adata, min_counts=filter_genes_min_counts ) #genes must have min # of counts for gene to be kept
     logger.info(f" Filtering cells  sc.pp.filter_genes(adata, min_counts={filter_genes_min_counts})")
-    logger.info(f' {adata.n_vars} observations AFTER  min_genes Filtering, min_counts={filter_genes_min_counts}')
+    logger.info(f' {adata.n_vars} n_vars AFTER  min_counts Filtering, min_counts={filter_genes_min_counts}')
     #print(f'Filtering genes pp.filter_genes(adata, min_counts=filter_genes_min_counts)  Genes remaining :  {adata.n_vars}')
     #print(f' {adata.n_vars} observations AFTER  min_genes Filtering, min_counts={filter_genes_min_counts}')
     return

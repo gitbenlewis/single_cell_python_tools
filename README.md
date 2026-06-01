@@ -1,4 +1,11 @@
 # single_cell_python_tools
+
+## Documentation
+
+- Published docs: [gitbenlewis.github.io/single_cell_python_tools](https://gitbenlewis.github.io/single_cell_python_tools/)
+- Source docs: [docs/README.md](docs/README.md)
+- Start with [installation](docs/installation.md), [quickstart](docs/quickstart.md), [DATASET_class](docs/DATASET_class.md), and the [API reference](docs/api-reference.md).
+
 Mostly scanpy wrappers and tools that use adata objects to stream line single cell analysis 
 
 # Installation
